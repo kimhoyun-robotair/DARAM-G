@@ -1,0 +1,70 @@
+[0.121s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'list', '-p', '--base-paths', '/home/kimhoyun/DARAM-G']
+[0.121s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='list', build_base='build', ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['/home/kimhoyun/DARAM-G'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, allow_overriding=[], topological_order=False, names_only=False, paths_only=True, topological_graph=False, topological_graph_dot=False, topological_graph_density=False, topological_graph_legend=False, topological_graph_dot_cluster=False, topological_graph_dot_include_skipped=False, mixin_files=None, mixin=None, verb_parser=<colcon_mixin.mixin.mixin_argument.MixinArgumentDecorator object at 0x7981fb922530>, verb_extension=<colcon_package_information.verb.list.ListVerb object at 0x7981fb9214b0>, main=<bound method ListVerb.main of <colcon_package_information.verb.list.ListVerb object at 0x7981fb9214b0>>, mixin_verb=('list',))
+[0.184s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.184s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.184s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.184s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.184s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.184s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/kimhoyun/DARAM-G'
+[0.184s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G) by extensions ['ignore', 'ignore_ament_install']
+[0.184s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G) by extension 'ignore'
+[0.184s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G) by extension 'ignore_ament_install'
+[0.185s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G) by extensions ['colcon_pkg']
+[0.185s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G) by extension 'colcon_pkg'
+[0.185s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G) by extensions ['colcon_meta']
+[0.185s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G) by extension 'colcon_meta'
+[0.185s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G) by extensions ['ros']
+[0.185s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G) by extension 'ros'
+[0.204s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G) by extensions ['cmake', 'python']
+[0.204s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G) by extension 'cmake'
+[0.204s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G) by extension 'python'
+[0.204s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G) by extensions ['python_setup_py']
+[0.204s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G) by extension 'python_setup_py'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/log) by extensions ['ignore', 'ignore_ament_install']
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/log) by extension 'ignore'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/log) ignored
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src) by extensions ['ignore', 'ignore_ament_install']
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src) by extension 'ignore'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src) by extension 'ignore_ament_install'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src) by extensions ['colcon_pkg']
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src) by extension 'colcon_pkg'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src) by extensions ['colcon_meta']
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src) by extension 'colcon_meta'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src) by extensions ['ros']
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src) by extension 'ros'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src) by extensions ['cmake', 'python']
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src) by extension 'cmake'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src) by extension 'python'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src) by extensions ['python_setup_py']
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src) by extension 'python_setup_py'
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/DARAM-G_sim) by extensions ['ignore', 'ignore_ament_install']
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/DARAM-G_sim) by extension 'ignore'
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/DARAM-G_sim) by extension 'ignore_ament_install'
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/DARAM-G_sim) by extensions ['colcon_pkg']
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/DARAM-G_sim) by extension 'colcon_pkg'
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/DARAM-G_sim) by extensions ['colcon_meta']
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/DARAM-G_sim) by extension 'colcon_meta'
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/DARAM-G_sim) by extensions ['ros']
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/DARAM-G_sim) by extension 'ros'
+[0.209s] DEBUG:colcon.colcon_core.package_identification:Package '/home/kimhoyun/DARAM-G/src/DARAM-G_sim' with type 'ros.ament_cmake' and name 'DARAM-G_sim'
+[0.209s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/autonomous_exploration) by extensions ['ignore', 'ignore_ament_install']
+[0.209s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/autonomous_exploration) by extension 'ignore'
+[0.209s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/autonomous_exploration) by extension 'ignore_ament_install'
+[0.209s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/autonomous_exploration) by extensions ['colcon_pkg']
+[0.209s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/autonomous_exploration) by extension 'colcon_pkg'
+[0.209s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/autonomous_exploration) by extensions ['colcon_meta']
+[0.209s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/autonomous_exploration) by extension 'colcon_meta'
+[0.209s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/autonomous_exploration) by extensions ['ros']
+[0.209s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/autonomous_exploration) by extension 'ros'
+[0.210s] DEBUG:colcon.colcon_core.package_identification:Package '/home/kimhoyun/DARAM-G/src/autonomous_exploration' with type 'ros.ament_python' and name 'autonomous_exploration'
+[0.210s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/rover_control) by extensions ['ignore', 'ignore_ament_install']
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/rover_control) by extension 'ignore'
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/rover_control) by extension 'ignore_ament_install'
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/rover_control) by extensions ['colcon_pkg']
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/rover_control) by extension 'colcon_pkg'
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/rover_control) by extensions ['colcon_meta']
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/rover_control) by extension 'colcon_meta'
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/rover_control) by extensions ['ros']
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(/home/kimhoyun/DARAM-G/src/rover_control) by extension 'ros'
+[0.212s] DEBUG:colcon.colcon_core.package_identification:Package '/home/kimhoyun/DARAM-G/src/rover_control' with type 'ros.ament_python' and name 'rover_control'
+[0.212s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults

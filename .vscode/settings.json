@@ -1,0 +1,30 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/kimhoyun/DOK4/build/vtol_control",
+        "/home/kimhoyun/DOK4/install/vtol_control/lib/python3.10/site-packages",
+        "/home/kimhoyun/DOK4/build/rescue_mission",
+        "/home/kimhoyun/DOK4/install/rescue_mission/lib/python3.10/site-packages",
+        "/home/kimhoyun/DOK4/build/multirotor_control",
+        "/home/kimhoyun/DOK4/install/multirotor_control/lib/python3.10/site-packages",
+        "/home/kimhoyun/DOK4/install/fixedwing_control/lib/python3.10/site-packages",
+        "/home/kimhoyun/DOK4/build/final_mission",
+        "/home/kimhoyun/DOK4/install/final_mission/lib/python3.10/site-packages",
+        "/home/kimhoyun/DOK4/install/px4_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/kimhoyun/DOK4/build/vtol_control",
+        "/home/kimhoyun/DOK4/install/vtol_control/lib/python3.10/site-packages",
+        "/home/kimhoyun/DOK4/build/rescue_mission",
+        "/home/kimhoyun/DOK4/install/rescue_mission/lib/python3.10/site-packages",
+        "/home/kimhoyun/DOK4/build/multirotor_control",
+        "/home/kimhoyun/DOK4/install/multirotor_control/lib/python3.10/site-packages",
+        "/home/kimhoyun/DOK4/install/fixedwing_control/lib/python3.10/site-packages",
+        "/home/kimhoyun/DOK4/build/final_mission",
+        "/home/kimhoyun/DOK4/install/final_mission/lib/python3.10/site-packages",
+        "/home/kimhoyun/DOK4/install/px4_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}
