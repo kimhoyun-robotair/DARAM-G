@@ -1,0 +1,6 @@
+Invoking command in '/home/kimhoyun/DARAM-G/build/daramg_sim': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/kimhoyun/DARAM-G/src/daramg_sim -DCMAKE_INSTALL_PREFIX=/home/kimhoyun/DARAM-G/install/daramg_sim
+Invoked command in '/home/kimhoyun/DARAM-G/build/daramg_sim' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/kimhoyun/DARAM-G/src/daramg_sim -DCMAKE_INSTALL_PREFIX=/home/kimhoyun/DARAM-G/install/daramg_sim
+Invoking command in '/home/kimhoyun/DARAM-G/build/daramg_sim': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/kimhoyun/DARAM-G/build/daramg_sim -- -j16 -l16
+Invoked command in '/home/kimhoyun/DARAM-G/build/daramg_sim' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/kimhoyun/DARAM-G/build/daramg_sim -- -j16 -l16
+Invoking command in '/home/kimhoyun/DARAM-G/build/daramg_sim': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/kimhoyun/DARAM-G/build/daramg_sim
+Invoked command in '/home/kimhoyun/DARAM-G/build/daramg_sim' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/kimhoyun/DARAM-G/build/daramg_sim
