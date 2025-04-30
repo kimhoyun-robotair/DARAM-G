@@ -1,2 +1,1 @@
-source;share/daramg_sim/environment/ament_prefix_path.sh
-source;share/daramg_sim/environment/path.sh
+/home/kimhoyun/DARAM-G/build/daramg_sim/ament_cmake_environment_hooks/local_setup.dsv

@@ -1,0 +1,22 @@
+[1.182s] Invoking command in '/home/kimhoyun/DARAM-G/build/daramg_bringup': PYTHONPATH=/home/kimhoyun/DARAM-G/build/daramg_bringup/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/kimhoyun/DARAM-G/install/daramg_bringup/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/kimhoyun/DARAM-G/build/daramg_bringup/build --no-deps symlink_data
+[1.339s] /home/kimhoyun/.local/lib/python3.10/site-packages/setuptools/_distutils/dist.py:289: UserWarning: Unknown distribution option: 'tests_require'
+[1.339s]   warnings.warn(msg)
+[1.513s] running develop
+[1.720s] running egg_info
+[1.740s] creating daramg_bringup.egg-info
+[1.740s] writing daramg_bringup.egg-info/PKG-INFO
+[1.741s] writing dependency_links to daramg_bringup.egg-info/dependency_links.txt
+[1.744s] writing requirements to daramg_bringup.egg-info/requires.txt
+[1.744s] writing top-level names to daramg_bringup.egg-info/top_level.txt
+[1.744s] writing manifest file 'daramg_bringup.egg-info/SOURCES.txt'
+[1.785s] reading manifest file 'daramg_bringup.egg-info/SOURCES.txt'
+[1.785s] writing manifest file 'daramg_bringup.egg-info/SOURCES.txt'
+[1.801s] running build_ext
+[1.801s] Creating /home/kimhoyun/DARAM-G/install/daramg_bringup/lib/python3.10/site-packages/daramg-bringup.egg-link (link to .)
+[1.802s] 
+[1.802s] Installed /home/kimhoyun/DARAM-G/build/daramg_bringup
+[1.802s] running symlink_data
+[1.802s] creating /home/kimhoyun/DARAM-G/install/daramg_bringup/share/ament_index/resource_index/packages
+[1.803s] symbolically linking /home/kimhoyun/DARAM-G/build/daramg_bringup/resource/daramg_bringup -> /home/kimhoyun/DARAM-G/install/daramg_bringup/share/ament_index/resource_index/packages
+[1.803s] symbolically linking /home/kimhoyun/DARAM-G/build/daramg_bringup/package.xml -> /home/kimhoyun/DARAM-G/install/daramg_bringup/share/daramg_bringup
+[1.869s] Invoked command in '/home/kimhoyun/DARAM-G/build/daramg_bringup' returned '0': PYTHONPATH=/home/kimhoyun/DARAM-G/build/daramg_bringup/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/kimhoyun/DARAM-G/install/daramg_bringup/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/kimhoyun/DARAM-G/build/daramg_bringup/build --no-deps symlink_data

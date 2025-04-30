@@ -1,0 +1,22 @@
+[1.192s] Invoking command in '/home/kimhoyun/DARAM-G/build/autonomous_exploration': PYTHONPATH=/home/kimhoyun/DARAM-G/build/autonomous_exploration/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/kimhoyun/DARAM-G/install/autonomous_exploration/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/kimhoyun/DARAM-G/build/autonomous_exploration/build --no-deps symlink_data
+[1.349s] /home/kimhoyun/.local/lib/python3.10/site-packages/setuptools/_distutils/dist.py:289: UserWarning: Unknown distribution option: 'tests_require'
+[1.349s]   warnings.warn(msg)
+[1.521s] running develop
+[1.725s] running egg_info
+[1.741s] creating autonomous_exploration.egg-info
+[1.741s] writing autonomous_exploration.egg-info/PKG-INFO
+[1.745s] writing dependency_links to autonomous_exploration.egg-info/dependency_links.txt
+[1.745s] writing requirements to autonomous_exploration.egg-info/requires.txt
+[1.745s] writing top-level names to autonomous_exploration.egg-info/top_level.txt
+[1.745s] writing manifest file 'autonomous_exploration.egg-info/SOURCES.txt'
+[1.786s] reading manifest file 'autonomous_exploration.egg-info/SOURCES.txt'
+[1.787s] writing manifest file 'autonomous_exploration.egg-info/SOURCES.txt'
+[1.803s] running build_ext
+[1.803s] Creating /home/kimhoyun/DARAM-G/install/autonomous_exploration/lib/python3.10/site-packages/autonomous-exploration.egg-link (link to .)
+[1.803s] 
+[1.803s] Installed /home/kimhoyun/DARAM-G/build/autonomous_exploration
+[1.804s] running symlink_data
+[1.804s] creating /home/kimhoyun/DARAM-G/install/autonomous_exploration/share/ament_index/resource_index/packages
+[1.804s] symbolically linking /home/kimhoyun/DARAM-G/build/autonomous_exploration/resource/autonomous_exploration -> /home/kimhoyun/DARAM-G/install/autonomous_exploration/share/ament_index/resource_index/packages
+[1.804s] symbolically linking /home/kimhoyun/DARAM-G/build/autonomous_exploration/package.xml -> /home/kimhoyun/DARAM-G/install/autonomous_exploration/share/autonomous_exploration
+[1.863s] Invoked command in '/home/kimhoyun/DARAM-G/build/autonomous_exploration' returned '0': PYTHONPATH=/home/kimhoyun/DARAM-G/build/autonomous_exploration/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/kimhoyun/DARAM-G/install/autonomous_exploration/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/kimhoyun/DARAM-G/build/autonomous_exploration/build --no-deps symlink_data
