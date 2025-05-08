@@ -1,1 +1,0 @@
-/home/kimhoyun/DARAM-G/src/daramg_sim/launch/rtab_map.launch.py

@@ -1,1 +1,0 @@
-/home/kimhoyun/DARAM-G/src/daramg_sim/launch/spawn_robot.launch.py
