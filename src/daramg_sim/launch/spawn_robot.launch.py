@@ -28,7 +28,7 @@ def generate_launch_description():
     )
 
     world_arg = DeclareLaunchArgument(
-        'world', default_value='empty.sdf',
+        'world', default_value="world.sdf",
         description='Name of the Gazebo world file to load'
     )
 
@@ -72,7 +72,7 @@ def generate_launch_description():
         'world': LaunchConfiguration('world'),
         }.items()
     )
-
+    """
     # Launch rviz
     rviz_node = Node(
         package='rviz2',
@@ -83,6 +83,8 @@ def generate_launch_description():
             {'use_sim_time': LaunchConfiguration('use_sim_time')},
         ]
     )
+    """
+
 
     # Spawn the URDF model using the `/world/<world_name>/create` service
     spawn_urdf_node = Node(
@@ -113,7 +115,7 @@ def generate_launch_description():
             "/camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
             "/imu@sensor_msgs/msg/Imu@gz.msgs.IMU",
             "/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan",
-            "/camera/depth_image@sensor_msgs/msg/Image@gz.msgs.Image",
+            # "/camera/depth_image@sensor_msgs/msg/Image@gz.msgs.Image",
             "/camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked",
         ],
         output="screen",
@@ -154,6 +156,7 @@ def generate_launch_description():
         executable="image_bridge",
         arguments=[
             "/camera/image",
+            "/camera/depth_image",
         ],
         output="screen",
         parameters=[
@@ -161,6 +164,7 @@ def generate_launch_description():
              'camera.image.compressed.jpeg_quality': 75},
         ],
     )
+
 
     joy = Node(
         package='joy',
@@ -191,7 +195,7 @@ def generate_launch_description():
     launchDescriptionObject.add_action(yaw_arg)
     launchDescriptionObject.add_action(sim_time_arg)
     launchDescriptionObject.add_action(world_launch)
-    launchDescriptionObject.add_action(rviz_node)
+    # launchDescriptionObject.add_action(rviz_node)
     launchDescriptionObject.add_action(spawn_urdf_node)
     launchDescriptionObject.add_action(gz_bridge_node)
     launchDescriptionObject.add_action(robot_state_publisher_node)
