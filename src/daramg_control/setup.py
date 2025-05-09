@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'rover_control'
+package_name = 'daramg_control'
 
 setup(
     name=package_name,
