@@ -13,11 +13,12 @@ def generate_launch_description():
 
     parameters={
           'frame_id':'base_link',
-          'odom_frame_id':'odom',
+          # 'odom_frame_id':'',
           'odom_tf_linear_variance':0.001,
           'odom_tf_angular_variance':0.001,
           'subscribe_rgbd':True,
           'subscribe_scan':True,
+          'subscribe_odom_info': True,
           'approx_sync':True,
           'sync_queue_size': 10,
           # RTAB-Map's internal parameters should be strings
@@ -44,7 +45,8 @@ def generate_launch_description():
          ('rgb/image',       '/camera/image'),
          ('depth/image',     '/camera/depth_image'),
          ('rgb/camera_info', '/camera/image/camera_info'),
-         ('scan',            '/scan')]
+         ('scan',            '/scan'),
+         ('odom',            '/odom')]
     
     config_rviz = os.path.join(
         get_package_share_directory('daramg_sim'), 'rviz', 'rtabmap.rviz'
