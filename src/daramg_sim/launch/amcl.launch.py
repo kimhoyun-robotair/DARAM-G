@@ -7,6 +7,7 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Comm
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
+from nav2_common.launch import RewrittenYaml
 
 def generate_launch_description():
 
@@ -15,19 +16,74 @@ def generate_launch_description():
 
     gazebo_models_path, ignore_last_dir = os.path.split(pkg_simple_rover)
     os.environ["GZ_SIM_RESOURCE_PATH"] += os.pathsep + gazebo_models_path
-    joy_teleop_config_file = os.path.join(pkg_share, 'config/MXswitch.config.yaml')
-
     """
+    # cartographer setting file 1
+    cartographer_config_dir = LaunchConfiguration('cartographer_config_dir',
+                                                default=os.path.join(pkg_simple_rover , 'config'))
+    # cartographer setting file 2
+    configuration_basename = LaunchConfiguration('configuration_basename', default='cartographer.lua')
+    resolution = LaunchConfiguration('resolution', default='0.05')
+    publish_period_sec = LaunchConfiguration('publish_period_sec', default='0.5')
+    """
+
+    # Nav2 configuration
+    namespace = LaunchConfiguration('namespace')
+    use_respawn = LaunchConfiguration('use_respawn')
+    lifecycle_nodes = ['map_server', 'amcl']
+    autostart = LaunchConfiguration('autostart')
+    params_file = LaunchConfiguration('params_file')
+    map_yaml_file = LaunchConfiguration('map')
+    map_dir = os.path.join(pkg_share, 'map')
+    map_file = 'warehouse.yaml'
+    param_dir = os.path.join(pkg_share, 'config')
+    param_file = 'amcl.yaml'
+    use_sim_time = LaunchConfiguration('use_sim_time')
+
+    param_substitutions = {
+        'use_sim_time': use_sim_time,
+        'yaml_filename': map_yaml_file
+    }
+
+    configured_params = RewrittenYaml(
+        source_file=params_file,
+        root_key=namespace,
+        param_rewrites=param_substitutions,
+        convert_types=True
+    )
+    
+    declare_namespace_cmd = DeclareLaunchArgument(
+        'namespace', default_value="",
+        description="Top-level namespace"
+    )
+
+    declare_use_respawn_cmd = DeclareLaunchArgument(
+        'use_respawn', default_value='False',
+        description='Whether to respawn if a node crashes. Applied when composition is disabled.'
+    )
+    
+    declare_autostart_cmd = DeclareLaunchArgument(
+        'autostart', default_value='true',
+        description='Automatically startup the nav2 stack')
+    
+    declare_map_yaml_cmd = DeclareLaunchArgument(
+        'map',
+        default_value=os.path.join(map_dir, map_file),
+        description='[localize] Full path to map yaml file to load')
+
+    declare_params_file_cmd = DeclareLaunchArgument(
+        'params_file',
+        default_value=os.path.join(param_dir, param_file),
+        description='Full path to the ROS2 parameters file to use')
+
     rviz_launch_arg = DeclareLaunchArgument(
         'rviz', default_value='true',
         description='Open RViz'
     )
 
     rviz_config_arg = DeclareLaunchArgument(
-        'rviz_config', default_value='rviz.rviz',
+        'rviz_config', default_value='nav2.rviz',
         description='RViz config file'
     )
-    """
 
     world_arg = DeclareLaunchArgument(
         'world', default_value='warehouse.sdf',
@@ -40,17 +96,17 @@ def generate_launch_description():
     )
 
     x_arg = DeclareLaunchArgument(
-        'x', default_value='2.5',
+        'x', default_value='0.2',
         description='x coordinate of spawned robot'
     )
 
     y_arg = DeclareLaunchArgument(
-        'y', default_value='1.5',
+        'y', default_value='0.45',
         description='y coordinate of spawned robot'
     )
 
     yaw_arg = DeclareLaunchArgument(
-        'yaw', default_value='-1.5707',
+        'yaw', default_value='0.0',
         description='yaw angle of spawned robot'
     )
 
@@ -74,7 +130,6 @@ def generate_launch_description():
         'world': LaunchConfiguration('world'),
         }.items()
     )
-    """
     # Launch rviz
     rviz_node = Node(
         package='rviz2',
@@ -85,7 +140,6 @@ def generate_launch_description():
             {'use_sim_time': LaunchConfiguration('use_sim_time')},
         ]
     )
-    """
 
     # Spawn the URDF model using the `/world/<world_name>/create` service
     spawn_urdf_node = Node(
@@ -168,29 +222,67 @@ def generate_launch_description():
             ('/tf_static', 'tf_static')
         ]
     )
+    """
+    cartographer = Node(
+        package='cartographer_ros',
+        executable='cartographer_node',
+        name='cartographer_node',
+        output='screen',
+        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
+        arguments=[
+            '-configuration_directory', cartographer_config_dir,
+            '-configuration_basename', configuration_basename]
+    )
+    # Executing Cartographer
+    cartographer_grid = Node(
+        package='cartographer_ros',
+        executable='cartographer_occupancy_grid_node',
+        name='occupancy_grid_node',
+        output='screen',
+        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
+        arguments=['-resolution', resolution, '-publish_period_sec', publish_period_sec]
+    )
+    """
 
-    joy = Node(
-        package='joy',
-        executable='joy_node',
-        name='joy_node',
-        parameters=[{
-            'device_id': 0,          # ls /dev/input/js* to find the device id
-            'deadzone': 0.3,         # Deadzone for the joystick axes
-            'autorepeat_rate': 20.0, # Autorepeat rate for the joystick buttons
-        }]
+    map_server = Node(
+        package='nav2_map_server',
+        executable='map_server',
+        name='map_server',
+        output='screen',
+        respawn=use_respawn,
+        respawn_delay=2.0,
+        parameters=[configured_params],
     )
 
-    joy_teleop = Node(
-        package='teleop_twist_joy',
-        executable='teleop_node',
-        name='teleop_twist_joy_node',
-        parameters=[joy_teleop_config_file]
+    amcl = Node(
+        package='nav2_amcl',
+        executable='amcl',
+        name='amcl',
+        output='screen',
+        respawn=use_respawn,
+        respawn_delay=2.0,
+        parameters=[configured_params],
+    )
+
+    lifecycle_manager = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_localization',
+        output='screen',
+        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')},
+                    {'autostart': autostart},
+                    {'node_names': lifecycle_nodes}],
     )
 
     launchDescriptionObject = LaunchDescription()
 
-    #launchDescriptionObject.add_action(rviz_launch_arg)
-    #launchDescriptionObject.add_action(rviz_config_arg)
+    launchDescriptionObject.add_action(declare_autostart_cmd)
+    launchDescriptionObject.add_action(declare_map_yaml_cmd)
+    launchDescriptionObject.add_action(declare_namespace_cmd)
+    launchDescriptionObject.add_action(declare_params_file_cmd)
+    launchDescriptionObject.add_action(declare_use_respawn_cmd)
+    launchDescriptionObject.add_action(rviz_launch_arg)
+    launchDescriptionObject.add_action(rviz_config_arg)
     launchDescriptionObject.add_action(world_arg)
     launchDescriptionObject.add_action(model_arg)
     launchDescriptionObject.add_action(x_arg)
@@ -198,13 +290,16 @@ def generate_launch_description():
     launchDescriptionObject.add_action(yaw_arg)
     launchDescriptionObject.add_action(sim_time_arg)
     launchDescriptionObject.add_action(world_launch)
-    #launchDescriptionObject.add_action(rviz_node)
+    launchDescriptionObject.add_action(rviz_node)
     launchDescriptionObject.add_action(spawn_urdf_node)
     launchDescriptionObject.add_action(gz_bridge_node)
-    launchDescriptionObject.add_action(gz_image_bridge_node)
-    launchDescriptionObject.add_action(relay_camera_info_node)
     launchDescriptionObject.add_action(robot_state_publisher_node)
-    launchDescriptionObject.add_action(joy)
-    launchDescriptionObject.add_action(joy_teleop)
+    #launchDescriptionObject.add_action(cartographer)
+    #launchDescriptionObject.add_action(cartographer_grid)
+    launchDescriptionObject.add_action(map_server)
+    launchDescriptionObject.add_action(amcl)
+    launchDescriptionObject.add_action(lifecycle_manager)
+    launchDescriptionObject.add_action(relay_camera_info_node)
+    launchDescriptionObject.add_action(gz_image_bridge_node)
 
     return launchDescriptionObject
