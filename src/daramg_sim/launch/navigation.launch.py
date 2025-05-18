@@ -28,7 +28,7 @@ from nav2_common.launch import RewrittenYaml
 
 def generate_launch_description():
     # Get the launch directory
-    my_nav_dir = get_package_share_directory('simple_rover')
+    my_nav_dir = get_package_share_directory('daramg_sim')
     my_param_dir = os.path.join(my_nav_dir, 'config')
     my_param_file = 'simple_rover.yaml'
 

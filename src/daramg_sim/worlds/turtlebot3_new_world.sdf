@@ -1,0 +1,888 @@
+<sdf version='1.10'>
+  <world name='turtlebot3_new_world'>
+    <physics type='ode'>
+      <max_step_size>0.0040000000000000001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>250</real_time_update_rate>
+    </physics>
+    <plugin name='gz::sim::systems::Physics' filename='gz-sim-physics-system'/>
+    <plugin name='gz::sim::systems::UserCommands' filename='gz-sim-user-commands-system'/>
+    <plugin name='gz::sim::systems::SceneBroadcaster' filename='gz-sim-scene-broadcaster-system'/>
+    <plugin name='gz::sim::systems::Contact' filename='gz-sim-contact-system'/>
+    <plugin name='gz::sim::systems::Imu' filename='gz-sim-imu-system'/>
+    <plugin name='gz::sim::systems::AirPressure' filename='gz-sim-air-pressure-system'/>
+    <plugin name='gz::sim::systems::ApplyLinkWrench' filename='gz-sim-apply-link-wrench-system'/>
+    <plugin name='gz::sim::systems::NavSat' filename='gz-sim-navsat-system'/>
+    <plugin name='gz::sim::systems::Sensors' filename='gz-sim-sensors-system'>
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <gui fullscreen='false'>
+      <plugin name='3D View' filename='MinimalScene'>
+        <gz-gui>
+          <title>3D View</title>
+          <property type='bool' key='showTitleBar'>false</property>
+          <property type='string' key='state'>docked</property>
+        </gz-gui>
+        <engine>ogre2</engine>
+        <scene>scene</scene>
+        <ambient_light>0.4 0.4 0.4</ambient_light>
+        <background_color>0.8 0.8 0.8</background_color>
+        <camera_pose>-6 0 6 0 0.5 0</camera_pose>
+        <camera_clip>
+          <near>0.25</near>
+          <far>25000</far>
+        </camera_clip>
+      </plugin>
+      <plugin name='Entity context menu' filename='EntityContextMenuPlugin'>
+        <gz-gui>
+          <property key='state' type='string'>floating</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='Scene Manager' filename='GzSceneManager'>
+        <gz-gui>
+          <property key='resizable' type='bool'>false</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='state' type='string'>floating</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='Interactive view control' filename='InteractiveViewControl'>
+        <gz-gui>
+          <property key='resizable' type='bool'>false</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='state' type='string'>floating</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='Camera Tracking' filename='CameraTracking'>
+        <gz-gui>
+          <property key='resizable' type='bool'>false</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='state' type='string'>floating</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='Marker manager' filename='MarkerManager'>
+        <gz-gui>
+          <property key='resizable' type='bool'>false</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='state' type='string'>floating</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='Select Entities' filename='SelectEntities'>
+        <gz-gui>
+          <anchors target='Select entities'>
+            <line own='right' target='right'/>
+            <line own='top' target='top'/>
+          </anchors>
+          <property key='resizable' type='bool'>false</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='state' type='string'>floating</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='Visualization Capabilities' filename='VisualizationCapabilities'>
+        <gz-gui>
+          <property key='resizable' type='bool'>false</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='state' type='string'>floating</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='Spawn Entities' filename='Spawn'>
+        <gz-gui>
+          <anchors target='Select entities'>
+            <line own='right' target='right'/>
+            <line own='top' target='top'/>
+          </anchors>
+          <property key='resizable' type='bool'>false</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='state' type='string'>floating</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='World control' filename='WorldControl'>
+        <gz-gui>
+          <title>World control</title>
+          <property type='bool' key='showTitleBar'>0</property>
+          <property type='bool' key='resizable'>0</property>
+          <property type='double' key='height'>72</property>
+          <property type='double' key='width'>121</property>
+          <property type='double' key='z'>1</property>
+          <property type='string' key='state'>floating</property>
+          <anchors target='3D View'>
+            <line own='left' target='left'/>
+            <line own='bottom' target='bottom'/>
+          </anchors>
+        </gz-gui>
+        <play_pause>1</play_pause>
+        <step>1</step>
+        <start_paused>1</start_paused>
+      </plugin>
+      <plugin name='World stats' filename='WorldStats'>
+        <gz-gui>
+          <title>World stats</title>
+          <property type='bool' key='showTitleBar'>0</property>
+          <property type='bool' key='resizable'>0</property>
+          <property type='double' key='height'>110</property>
+          <property type='double' key='width'>290</property>
+          <property type='double' key='z'>1</property>
+          <property type='string' key='state'>floating</property>
+          <anchors target='3D View'>
+            <line own='right' target='right'/>
+            <line own='bottom' target='bottom'/>
+          </anchors>
+        </gz-gui>
+        <sim_time>1</sim_time>
+        <real_time>1</real_time>
+        <real_time_factor>1</real_time_factor>
+        <iterations>1</iterations>
+      </plugin>
+      <plugin name='Entity tree' filename='EntityTree'/>
+    </gui>
+    <gravity>0 0 -9.8000000000000007</gravity>
+    <magnetic_field>6.0000000000000002e-06 2.3e-05 -4.1999999999999998e-05</magnetic_field>
+    <atmosphere type='adiabatic'/>
+    <scene>
+      <grid>false</grid>
+      <ambient>0.400000006 0.400000006 0.400000006 1</ambient>
+      <background>0.699999988 0.699999988 0.699999988 1</background>
+      <shadows>true</shadows>
+    </scene>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <world_frame_orientation>ENU</world_frame_orientation>
+      <latitude_deg>47.397971057728974</latitude_deg>
+      <longitude_deg>8.5461637398001464</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+    <model name='ground_plane'>
+      <static>true</static>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>1 1</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.800000012 0.800000012 0.800000012 1</ambient>
+            <diffuse>0.800000012 0.800000012 0.800000012 1</diffuse>
+            <specular>0.800000012 0.800000012 0.800000012 1</specular>
+          </material>
+        </visual>
+        <pose>0 0 0 0 0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>0 0 0 0 0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='turtlebot3_new_world'>
+      <static>true</static>
+      <model name='ros_symbol'>
+        <static>true</static>
+        <link name='symbol'>
+          <collision name='one_one'>
+            <pose>-3.1000000000000001 -3.1000000000000001 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <max_contacts>10</max_contacts>
+            <surface>
+              <bounce/>
+              <friction>
+                <ode/>
+              </friction>
+              <contact>
+                <ode/>
+              </contact>
+            </surface>
+          </collision>
+          <visual name='one_one'>
+            <pose>-3.1000000000000001 -3.1000000000000001 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <material>
+              <script>
+                <uri>file://media/materials/scripts/gazebo.material</uri>
+                <name>Gazebo/White</name>
+              </script>
+            </material>
+          </visual>
+          <collision name='one_two'>
+            <pose>-2.1000000000000001 0.69999999999999996 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <max_contacts>10</max_contacts>
+            <surface>
+              <bounce/>
+              <friction>
+                <ode/>
+              </friction>
+              <contact>
+                <ode/>
+              </contact>
+            </surface>
+          </collision>
+          <visual name='one_two'>
+            <pose>-2.1000000000000001 0.69999999999999996 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <material>
+              <script>
+                <uri>file://media/materials/scripts/gazebo.material</uri>
+                <name>Gazebo/White</name>
+              </script>
+            </material>
+          </visual>
+          <collision name='one_three'>
+            <pose>-7.0999999999999996 1.1000000000000001 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <max_contacts>10</max_contacts>
+            <surface>
+              <bounce/>
+              <friction>
+                <ode/>
+              </friction>
+              <contact>
+                <ode/>
+              </contact>
+            </surface>
+          </collision>
+          <visual name='one_three'>
+            <pose>-7.0999999999999996 1.1000000000000001 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <material>
+              <script>
+                <uri>file://media/materials/scripts/gazebo.material</uri>
+                <name>Gazebo/White</name>
+              </script>
+            </material>
+          </visual>
+          <collision name='two_one'>
+            <pose>0 -5.0999999999999996 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <max_contacts>10</max_contacts>
+            <surface>
+              <bounce/>
+              <friction>
+                <ode/>
+              </friction>
+              <contact>
+                <ode/>
+              </contact>
+            </surface>
+          </collision>
+          <visual name='two_one'>
+            <pose>0 -5.0999999999999996 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <material>
+              <script>
+                <uri>file://media/materials/scripts/gazebo.material</uri>
+                <name>Gazebo/White</name>
+              </script>
+            </material>
+          </visual>
+          <collision name='two_two'>
+            <pose>6.3799999999999999 -2.3999999999999999 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <max_contacts>10</max_contacts>
+            <surface>
+              <bounce/>
+              <friction>
+                <ode/>
+              </friction>
+              <contact>
+                <ode/>
+              </contact>
+            </surface>
+          </collision>
+          <visual name='two_two'>
+            <pose>6.3799999999999999 -2.3999999999999999 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <material>
+              <script>
+                <uri>file://media/materials/scripts/gazebo.material</uri>
+                <name>Gazebo/White</name>
+              </script>
+            </material>
+          </visual>
+          <collision name='two_three'>
+            <pose>2.7000000000000002 -7.5 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <max_contacts>10</max_contacts>
+            <surface>
+              <bounce/>
+              <friction>
+                <ode/>
+              </friction>
+              <contact>
+                <ode/>
+              </contact>
+            </surface>
+          </collision>
+          <visual name='two_three'>
+            <pose>2.7000000000000002 -7.5 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <material>
+              <script>
+                <uri>file://media/materials/scripts/gazebo.material</uri>
+                <name>Gazebo/White</name>
+              </script>
+            </material>
+          </visual>
+          <collision name='three_one'>
+            <pose>6.7999999999999998 -1.1000000000000001 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <max_contacts>10</max_contacts>
+            <surface>
+              <bounce/>
+              <friction>
+                <ode/>
+              </friction>
+              <contact>
+                <ode/>
+              </contact>
+            </surface>
+          </collision>
+          <visual name='three_one'>
+            <pose>6.7999999999999998 -1.1000000000000001 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <material>
+              <script>
+                <uri>file://media/materials/scripts/gazebo.material</uri>
+                <name>Gazebo/White</name>
+              </script>
+            </material>
+          </visual>
+          <collision name='three_two'>
+            <pose>7.5999999999999996 3.98 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <max_contacts>10</max_contacts>
+            <surface>
+              <bounce/>
+              <friction>
+                <ode/>
+              </friction>
+              <contact>
+                <ode/>
+              </contact>
+            </surface>
+          </collision>
+          <visual name='three_two'>
+            <pose>7.5999999999999996 3.98 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <material>
+              <script>
+                <uri>file://media/materials/scripts/gazebo.material</uri>
+                <name>Gazebo/White</name>
+              </script>
+            </material>
+          </visual>
+          <collision name='three_three'>
+            <pose>-4.5599999999999996 8.0999999999999996 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <max_contacts>10</max_contacts>
+            <surface>
+              <bounce/>
+              <friction>
+                <ode/>
+              </friction>
+              <contact>
+                <ode/>
+              </contact>
+            </surface>
+          </collision>
+          <visual name='three_three'>
+            <pose>-4.5599999999999996 8.0999999999999996 0.25 0 0 0</pose>
+            <geometry>
+              <cylinder>
+                <radius>0.14999999999999999</radius>
+                <length>7.5</length>
+              </cylinder>
+            </geometry>
+            <material>
+              <script>
+                <uri>file://media/materials/scripts/gazebo.material</uri>
+                <name>Gazebo/White</name>
+              </script>
+            </material>
+          </visual>
+          <collision name='body'>
+            <pose>0 0 -0.29999999999999999 0 0 -1.5708</pose>
+            <geometry>
+              <mesh>
+                <uri>model://turtlebot3_world/meshes/wall.dae</uri>
+                <scale>1 1 1</scale>
+              </mesh>
+            </geometry>
+            <max_contacts>10</max_contacts>
+            <surface>
+              <bounce/>
+              <friction>
+                <ode/>
+              </friction>
+              <contact>
+                <ode/>
+              </contact>
+            </surface>
+          </collision>
+          <visual name='body'>
+            <pose>0 0 -0.29999999999999999 0 0 -1.5708</pose>
+            <geometry>
+              <mesh>
+                <uri>model://turtlebot3_world/meshes/wall.dae</uri>
+                <scale>1 1 1</scale>
+              </mesh>
+            </geometry>
+            <material>
+              <script>
+                <uri>file://media/materials/scripts/gazebo.material</uri>
+                <name>Gazebo/FlatBlack</name>
+              </script>
+            </material>
+          </visual>
+        </link>
+      </model>
+      <pose>0 0 0 0 0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='aws_robomaker_warehouse_ClutteringC_01'>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01/meshes/aws_robomaker_warehouse_ClutteringC_01_collision.DAE</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.59999999999999998</mu>
+                <mu2>0.59999999999999998</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+              <torsional>
+                <coefficient>1</coefficient>
+                <patch_radius>0</patch_radius>
+                <surface_radius>0</surface_radius>
+                <use_patch_radius>true</use_patch_radius>
+                <ode>
+                  <slip>0</slip>
+                </ode>
+              </torsional>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01/meshes/aws_robomaker_warehouse_ClutteringC_01_visual.DAE</uri>
+            </mesh>
+          </geometry>
+          <meta>
+            <layer>1</layer>
+          </meta>
+        </visual>
+        <pose>0 0 0 0 0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <static>true</static>
+      <pose>2.5485043091689494 5.5611169906968021 0 0 0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='Dumpster'>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>1.5 1.5 1.5</scale>
+              <uri>model://dumpster/meshes/dumpster.dae</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>1.5 1.5 1.5</scale>
+              <uri>model://dumpster/meshes/dumpster.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://dumpster/materials/scripts</uri>
+              <uri>model://dumpster/materials/textures</uri>
+              <name>Dumpster/Diffuse</name>
+            </script>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>model://dumpster/materials/textures/Dumpster_Diffuse.png</albedo_map>
+                <metalness_map>model://dumpster/materials/textures/Dumpster_Spec.png</metalness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <pose>0 0 0 0 0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-5.7019582480615458 3.8924179861220631 0 0 0 0</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='LitterBin'>
+      <static>true</static>
+      <link name='body'>
+        <pose>0 0 0 0 0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://LitterBin/meshes/Litter.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>model://LitterBin/meshes/Litter.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>6.2331008652223581 -4.3017083197245238 0 0 0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='person_standing'>
+      <link name='link'>
+        <inertial>
+          <pose>0 -0.10000000000000001 0.94999999999999996 0 0 0</pose>
+          <mass>80</mass>
+          <inertia>
+            <ixx>24.879999999999999</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>25.73</iyy>
+            <iyz>0</iyz>
+            <izz>2.48</izz>
+          </inertia>
+        </inertial>
+        <collision name='bottom'>
+          <pose>0 -0.10000000000000001 0.01 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5 0.34999999999999998 0.02</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='person'>
+          <pose>0 0 0.02 0.040000000000000001 0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://person_standing/meshes/standing.dae</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <visual name='visual'>
+          <pose>0 0 0.02 0.040000000000000001 0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://person_standing/meshes/standing.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <pose>0 0 0 0 0 0</pose>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>3.1947528259326283 -6.2794431419676116 0 0 0 0</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='rescue_randy'>
+      <static>true</static>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>model://rescue_randy/meshes/rescue_randy.dae</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://rescue_randy/meshes/rescue_randy.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>model://rescue_randy/materials/textures/rescue_randy_albedo.png</albedo_map>
+                <normal_map>model://rescue_randy/materials/textures/rescue_randy_normal.png</normal_map>
+                <metalness_map>model://rescue_randy/materials/textures/rescue_randy_metalness.png</metalness_map>
+                <roughness_map>model://rescue_randy/materials/textures/rescue_randy_roughness.png</roughness_map>
+              </metal>
+            </pbr>
+            <script>
+              <uri>model://rescue_randy/materials/scripts</uri>
+              <uri>model://rescue_randy/materials/textures</uri>
+              <name>RescueRandy/Diffuse</name>
+            </script>
+          </material>
+          <plugin name='ignition::gazebo::systems::Thermal' filename='ignition-gazebo-thermal-system'>
+            <heat_signature>model://rescue_randy/materials/textures/RescueRandy_Thermal.png</heat_signature>
+            <max_temp>310</max_temp>
+          </plugin>
+        </visual>
+        <pose>0 0 0 0 0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-4.6026913537939098 -6.1176029059563781 0 0 0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='Suitcase1H'>
+      <static>true</static>
+      <link name='body'>
+        <pose>0 0 0 0 0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://Suitcase1H/meshes/Suitcase1H.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>model://Suitcase1H/meshes/Suitcase1H_Col.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-1.1137781488073077 7.6354084731737766 0 0 0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <include>
+      <uri>file:///home/kimhoyun/gazebo_models/first_2015_trash_can</uri>
+      <name>first_2015_trash_can</name>
+      <pose>0.13854104416662061 -8.0729007363623211 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>file:///home/kimhoyun/gazebo_models/first_2015_trash_can</uri>
+      <name>first_2015_trash_can_0</name>
+      <pose>-2.4493454767332601 -6.6644712025272046 0 0 0 0</pose>
+    </include>
+    <light name='sunUTC' type='directional'>
+      <pose>0 0 500 0 0 0</pose>
+      <cast_shadows>true</cast_shadows>
+      <intensity>1</intensity>
+      <direction>0.001 0.625 -0.78000000000000003</direction>
+      <diffuse>0.903999984 0.903999984 0.903999984 1</diffuse>
+      <specular>0.270999998 0.270999998 0.270999998 1</specular>
+      <attenuation>
+        <range>2000</range>
+        <linear>0</linear>
+        <constant>1</constant>
+        <quadratic>0</quadratic>
+      </attenuation>
+      <spot>
+        <inner_angle>0</inner_angle>
+        <outer_angle>0</outer_angle>
+        <falloff>0</falloff>
+      </spot>
+    </light>
+  </world>
+</sdf>

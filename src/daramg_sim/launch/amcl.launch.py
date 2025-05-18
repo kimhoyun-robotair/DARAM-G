@@ -16,15 +16,6 @@ def generate_launch_description():
 
     gazebo_models_path, ignore_last_dir = os.path.split(pkg_simple_rover)
     os.environ["GZ_SIM_RESOURCE_PATH"] += os.pathsep + gazebo_models_path
-    """
-    # cartographer setting file 1
-    cartographer_config_dir = LaunchConfiguration('cartographer_config_dir',
-                                                default=os.path.join(pkg_simple_rover , 'config'))
-    # cartographer setting file 2
-    configuration_basename = LaunchConfiguration('configuration_basename', default='cartographer.lua')
-    resolution = LaunchConfiguration('resolution', default='0.05')
-    publish_period_sec = LaunchConfiguration('publish_period_sec', default='0.5')
-    """
 
     # Nav2 configuration
     namespace = LaunchConfiguration('namespace')
@@ -34,7 +25,7 @@ def generate_launch_description():
     params_file = LaunchConfiguration('params_file')
     map_yaml_file = LaunchConfiguration('map')
     map_dir = os.path.join(pkg_share, 'map')
-    map_file = 'warehouse.yaml'
+    map_file = 'turtlebot3_new_world.yaml'
     param_dir = os.path.join(pkg_share, 'config')
     param_file = 'amcl.yaml'
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -81,12 +72,12 @@ def generate_launch_description():
     )
 
     rviz_config_arg = DeclareLaunchArgument(
-        'rviz_config', default_value='nav2.rviz',
+        'rviz_config', default_value='sim.rviz',
         description='RViz config file'
     )
 
     world_arg = DeclareLaunchArgument(
-        'world', default_value='warehouse.sdf',
+        'world', default_value='turtlebot3_new_world.sdf',
         description='Name of the Gazebo world file to load'
     )
 
@@ -96,17 +87,17 @@ def generate_launch_description():
     )
 
     x_arg = DeclareLaunchArgument(
-        'x', default_value='0.2',
+        'x', default_value='2.5',
         description='x coordinate of spawned robot'
     )
 
     y_arg = DeclareLaunchArgument(
-        'y', default_value='0.45',
+        'y', default_value='1.5',
         description='y coordinate of spawned robot'
     )
 
     yaw_arg = DeclareLaunchArgument(
-        'yaw', default_value='0.0',
+        'yaw', default_value='-1.5707',
         description='yaw angle of spawned robot'
     )
 
