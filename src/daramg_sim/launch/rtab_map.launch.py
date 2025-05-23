@@ -12,7 +12,7 @@ def generate_launch_description():
     localization = LaunchConfiguration('localization')
 
     parameters={
-        'frame_id':'base_link',
+        'frame_id':'base_footprint',
         'odom_frame_id':'odom',
         'odom_tf_linear_variance':0.001,
         'odom_tf_angular_variance':0.001,
@@ -54,7 +54,7 @@ def generate_launch_description():
     
 
     config_rviz = os.path.join(
-        get_package_share_directory('daramg_sim'), 'rviz', 'sim.rviz'
+        get_package_share_directory('daramg_sim'), 'rviz', 'rtabmap.rviz'
     )
 
 

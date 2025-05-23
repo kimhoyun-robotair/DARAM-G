@@ -3,7 +3,7 @@
     <!-- STEP 10 - Lidar -->
     <joint name="depth_pillar_joint" type="fixed">
         <origin xyz="0.25 0.0 0.275" rpy="0.0 0.0 0.0"/>
-        <parent link="base_link"/>
+        <parent link="base_footprint"/>
         <child link="depth_pillar"/>
         <axis xyz="0.0 0.0 0.0"/>
         <limit lower="0.0" upper="0.0" effort="0.0" velocity="0.0"/>

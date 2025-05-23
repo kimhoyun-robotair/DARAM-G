@@ -17,13 +17,13 @@
     <xacro:include filename="$(find daramg_sim)/urdf/imu.xacro"/>
 
     <!--base link's link and base link's joint-->
-    <link name="base_link"/>
+    <link name="base_footprint"/>
 
 
-    <!--joint for base_link and chassis-->
+    <!--joint for base_footprint and chassis-->
     <joint name="chassis_joint" type="fixed">
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-        <parent link="base_link"/>
+        <parent link="base_footprint"/>
         <child link="chassis"/>
     </joint>
 
@@ -51,7 +51,7 @@
     <!--joint for front_left_wheel-->
     <joint name="front_left_wheel_joint" type="continuous">
         <origin xyz="0.25 0.2 0.0" rpy="0.0 0.0 0.0"/>
-        <parent link="base_link"/>
+        <parent link="base_footprint"/>
         <child link="front_left_wheel"/>
         <axis xyz="0.0 1.0 0.0"/>
         <limit effort="100.0" velocity="10.0"/>
@@ -81,7 +81,7 @@
     <!--joint for front_right_wheel-->
     <joint name="front_right_wheel_joint" type="continuous">
         <origin xyz="0.25 -0.2 0.0" rpy="0.0 0.0 0.0"/>
-        <parent link="base_link"/>
+        <parent link="base_footprint"/>
         <child link="front_right_wheel"/>
         <axis xyz="0.0 1.0 0.0"/>
         <limit effort="100.0" velocity="10.0"/>
@@ -111,7 +111,7 @@
     <!--joint for rear_left_wheel-->
     <joint name="rear_left_wheel_joint" type="continuous">
         <origin xyz="-0.25 0.2 0.0" rpy="0.0 0.0 0.0"/>
-        <parent link="base_link"/>
+        <parent link="base_footprint"/>
         <child link="rear_left_wheel"/>
         <axis xyz="0.0 1.0 0.0"/>
         <limit effort="100.0" velocity="10.0"/>
@@ -141,7 +141,7 @@
     <!--joint for rear_right_wheel-->
     <joint name="rear_right_wheel_joint" type="continuous">
         <origin xyz="-0.25 -0.2 0.0" rpy="0.0 0.0 0.0"/>
-        <parent link="base_link"/>
+        <parent link="base_footprint"/>
         <child link="rear_right_wheel"/>
         <axis xyz="0.0 1.0 0.0"/>
         <limit effort="100.0" velocity="10.0"/>
