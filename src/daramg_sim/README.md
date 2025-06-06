@@ -9,6 +9,12 @@ This package includes:
 
 - 🧭 Launch files to run AMCL and Nav2
 
+**Refer to this tutorial to first download the files from the offline model repository, then either export the model path to ```GZ_SIM_RESOURCE_PATH``` or add the export command to your ```.bashrc```.**
+
+- https://github.com/MOGI-ROS/Week-3-4-Gazebo-basics?tab=readme-ov-file
+
+**If the model or world file still cannot be opened and shows errors, please open the SDF file and update any hardcoded paths to models, meshes, or other resources so that they point to the correct locations on your system.**
+
 **1. Running RTAB-Map 🗺️**
 ```bash
 # Terminal 1

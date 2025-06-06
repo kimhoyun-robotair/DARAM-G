@@ -34,7 +34,7 @@ def generate_launch_description():
     )
 
     world_arg = DeclareLaunchArgument(
-        'world', default_value='turtlebot3_new_world.sdf',
+        'world', default_value='warehouse.sdf',
         description='Name of the Gazebo world file to load'
     )
 

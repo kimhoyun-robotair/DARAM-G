@@ -816,7 +816,7 @@
     <include>
       <uri>file:///home/kimhoyun/gazebo_models/brick_box_3x1x3</uri>
       <name>brick_box_3x1x3</name>
-      <pose>-4.8714547677140327 3.6950552758003354 0 0 0 0</pose>
+      <pose>-4.8714499473571777 3.6950600147247314 0 0 0 -1.9192117238451321</pose>
     </include>
     <include>
       <uri>file:///home/kimhoyun/gazebo_models/Sofa</uri>
@@ -827,6 +827,16 @@
       <uri>file:///home/kimhoyun/gazebo_models/LitterBin</uri>
       <name>LitterBin_0</name>
       <pose>-6.1891673330635637 -0.21292898998745458 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>file:///home/kimhoyun/gazebo_models/nist_maze_wall_120</uri>
+      <name>nist_maze_wall_120</name>
+      <pose>1.4995700120925903 -3.6740601062774658 0 0 0 -0.4669455623002165</pose>
+    </include>
+    <include>
+      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
+      <name>aws_robomaker_warehouse_ClutteringC_01_0</name>
+      <pose>-0.53950521712314092 -1.7882198493293924 0 0 0 0</pose>
     </include>
     <light name='sunUTC' type='directional'>
       <pose>0 0 500 0 0 0</pose>
