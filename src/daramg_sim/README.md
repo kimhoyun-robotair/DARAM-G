@@ -17,6 +17,8 @@ This package includes:
 
 **Also, don’t forget that you must edit the parameters and map files referenced inside the launch files. All launch files currently use the parameters and map files from kimhoyun-robotair’s setup.**
 
+---
+
 **Main 1. Running Autonomous Exploration with RTAB-MAP, Nav2, m-Explore 🗺️**
 ```bash
 # Terminal 1
