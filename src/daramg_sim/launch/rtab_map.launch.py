@@ -54,7 +54,7 @@ def generate_launch_description():
     
 
     config_rviz = os.path.join(
-        get_package_share_directory('daramg_sim'), 'rviz', 'rtabmap.rviz'
+        get_package_share_directory('daramg_sim'), 'rviz', 'autonomous_exploration.rviz'
     )
 
 
