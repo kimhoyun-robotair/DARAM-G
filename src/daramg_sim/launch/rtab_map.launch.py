@@ -29,17 +29,22 @@ def generate_launch_description():
         'RGBD/ProximityPathMaxNeighbors': '10', # Do also proximity detection by space by merging close scans together.
         'Reg/Strategy':              '1',       # 0=Visual, 1=ICP, 2=Visual+ICP
         'Vis/MinInliers':            '12',      # 3D visual words minimum inliers to accept loop closure
-        'RGBD/OptimizeFromGraphEnd': 'false',   # Optimize graph from initial node so /map -> /odom transform will be generated
+        'RGBD/OptimizeFromGraphEnd': 'true',   # Optimize graph from initial node so /map -> /odom transform will be generated
         'RGBD/OptimizeMaxError':     '4',       # Reject any loop closure causing large errors (>3x link's covariance) in the map
-        'Reg/Force3DoF':             'true',    # 2D SLAM
-        'Grid/FromDepth':            'false',   # Create 2D occupancy grid from laser scan
+        'Reg/Force3DoF':             'false',    # if true, 2D SLAM
+        'Grid/FromDepth':            'true',   # if false, Create 2D occupancy grid from laser scan
         'Mem/STMSize':               '30',      # increased to 30 to avoid adding too many loop closures on just seen locations
         'RGBD/LocalRadius':          '5',       # limit length of proximity detections
         'Icp/CorrespondenceRatio':   '0.2',     # minimum scan overlap to accept loop closure
         'Icp/PM':                    'false',
         'Icp/PointToPlane':          'false',
         'Icp/MaxCorrespondenceDistance': '0.15',
-        'Icp/VoxelSize':             '0.05'
+        'Icp/VoxelSize':             '0.05',
+        'Grid/3D':                   'true', # Create 3D occupancy grid from depth image'
+        'Grid/CellSize':          '0.05',    # 3D occupancy grid cell size
+        'Grid/RayTracing':          'true', # Use ray tracing to fill 3D occupancy grid
+        'Grid/Sensor':              '2', # 0=laser 1=Depth 2=Laser+Depth
+        'Grid/RangeMax':            '5.0', # Maximum range of the sensor to fill the 3D occupancy grid
     }
     
     remappings=[

@@ -1,26 +1,173 @@
 <sdf version='1.10'>
   <world name='empty'>
-    <physics name='1ms' type='ignored'>
-      <max_step_size>0.001</max_step_size>
+    <physics type='ode'>
+      <max_step_size>0.0040000000000000001</max_step_size>
       <real_time_factor>1</real_time_factor>
-      <real_time_update_rate>1000</real_time_update_rate>
+      <real_time_update_rate>250</real_time_update_rate>
     </physics>
     <plugin name='gz::sim::systems::Physics' filename='gz-sim-physics-system'/>
     <plugin name='gz::sim::systems::UserCommands' filename='gz-sim-user-commands-system'/>
     <plugin name='gz::sim::systems::SceneBroadcaster' filename='gz-sim-scene-broadcaster-system'/>
     <plugin name='gz::sim::systems::Contact' filename='gz-sim-contact-system'/>
+    <plugin name='gz::sim::systems::Imu' filename='gz-sim-imu-system'/>
+    <plugin name='gz::sim::systems::AirPressure' filename='gz-sim-air-pressure-system'/>
+    <plugin name='gz::sim::systems::ApplyLinkWrench' filename='gz-sim-apply-link-wrench-system'/>
+    <plugin name='gz::sim::systems::NavSat' filename='gz-sim-navsat-system'/>
     <plugin name='gz::sim::systems::Sensors' filename='gz-sim-sensors-system'>
       <render_engine>ogre2</render_engine>
     </plugin>
-    <plugin name='gz::sim::systems::Imu' filename='gz-sim-imu-system'/>
+    <gui fullscreen='false'>
+      <plugin name='3D View' filename='MinimalScene'>
+        <gz-gui>
+          <title>3D View</title>
+          <property type='bool' key='showTitleBar'>false</property>
+          <property type='string' key='state'>docked</property>
+        </gz-gui>
+        <engine>ogre2</engine>
+        <scene>scene</scene>
+        <ambient_light>0.4 0.4 0.4</ambient_light>
+        <background_color>0.8 0.8 0.8</background_color>
+        <camera_pose>-6 0 6 0 0.5 0</camera_pose>
+        <camera_clip>
+          <near>0.25</near>
+          <far>25000</far>
+        </camera_clip>
+      </plugin>
+      <plugin name='Entity context menu' filename='EntityContextMenuPlugin'>
+        <gz-gui>
+          <property key='state' type='string'>floating</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='Scene Manager' filename='GzSceneManager'>
+        <gz-gui>
+          <property key='resizable' type='bool'>false</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='state' type='string'>floating</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='Interactive view control' filename='InteractiveViewControl'>
+        <gz-gui>
+          <property key='resizable' type='bool'>false</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='state' type='string'>floating</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='Camera Tracking' filename='CameraTracking'>
+        <gz-gui>
+          <property key='resizable' type='bool'>false</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='state' type='string'>floating</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='Marker manager' filename='MarkerManager'>
+        <gz-gui>
+          <property key='resizable' type='bool'>false</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='state' type='string'>floating</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='Select Entities' filename='SelectEntities'>
+        <gz-gui>
+          <anchors target='Select entities'>
+            <line own='right' target='right'/>
+            <line own='top' target='top'/>
+          </anchors>
+          <property key='resizable' type='bool'>false</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='state' type='string'>floating</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='Visualization Capabilities' filename='VisualizationCapabilities'>
+        <gz-gui>
+          <property key='resizable' type='bool'>false</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='state' type='string'>floating</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='Spawn Entities' filename='Spawn'>
+        <gz-gui>
+          <anchors target='Select entities'>
+            <line own='right' target='right'/>
+            <line own='top' target='top'/>
+          </anchors>
+          <property key='resizable' type='bool'>false</property>
+          <property key='width' type='double'>5</property>
+          <property key='height' type='double'>5</property>
+          <property key='state' type='string'>floating</property>
+          <property key='showTitleBar' type='bool'>false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name='World control' filename='WorldControl'>
+        <gz-gui>
+          <title>World control</title>
+          <property type='bool' key='showTitleBar'>0</property>
+          <property type='bool' key='resizable'>0</property>
+          <property type='double' key='height'>72</property>
+          <property type='double' key='width'>121</property>
+          <property type='double' key='z'>1</property>
+          <property type='string' key='state'>floating</property>
+          <anchors target='3D View'>
+            <line own='left' target='left'/>
+            <line own='bottom' target='bottom'/>
+          </anchors>
+        </gz-gui>
+        <play_pause>1</play_pause>
+        <step>1</step>
+        <start_paused>1</start_paused>
+      </plugin>
+      <plugin name='World stats' filename='WorldStats'>
+        <gz-gui>
+          <title>World stats</title>
+          <property type='bool' key='showTitleBar'>0</property>
+          <property type='bool' key='resizable'>0</property>
+          <property type='double' key='height'>110</property>
+          <property type='double' key='width'>290</property>
+          <property type='double' key='z'>1</property>
+          <property type='string' key='state'>floating</property>
+          <anchors target='3D View'>
+            <line own='right' target='right'/>
+            <line own='bottom' target='bottom'/>
+          </anchors>
+        </gz-gui>
+        <sim_time>1</sim_time>
+        <real_time>1</real_time>
+        <real_time_factor>1</real_time_factor>
+        <iterations>1</iterations>
+      </plugin>
+      <plugin name='Entity tree' filename='EntityTree'/>
+    </gui>
     <gravity>0 0 -9.8000000000000007</gravity>
-    <magnetic_field>5.5644999999999998e-06 2.2875799999999999e-05 -4.2388400000000002e-05</magnetic_field>
+    <magnetic_field>6.0000000000000002e-06 2.3e-05 -4.1999999999999998e-05</magnetic_field>
     <atmosphere type='adiabatic'/>
     <scene>
+      <grid>false</grid>
       <ambient>0.400000006 0.400000006 0.400000006 1</ambient>
       <background>0.699999988 0.699999988 0.699999988 1</background>
       <shadows>true</shadows>
     </scene>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <world_frame_orientation>ENU</world_frame_orientation>
+      <latitude_deg>47.397971057728974</latitude_deg>
+      <longitude_deg>8.5461637398001464</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
     <model name='ground_plane'>
       <static>true</static>
       <link name='link'>
@@ -33,9 +180,7 @@
           </geometry>
           <surface>
             <friction>
-              <ode>
-                <mu>50</mu>
-              </ode>
+              <ode/>
             </friction>
             <bounce/>
             <contact/>
@@ -73,139 +218,134 @@
       <self_collide>false</self_collide>
     </model>
     <include>
-      <uri>file:///home/kimhoyun/.gz/fuel/fuel.gazebosim.org/openrobotics/models/warehouse/5</uri>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/warehouse/1</uri>
       <name>warehouse</name>
-      <pose>2.1237794472033329 -1.5969571672278011 0 0 0 0</pose>
+      <pose>1.4657172818994537 0.4099457019043351 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01</name>
-      <pose>13.75206748164835 19.757343080361839 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/shelf_big/2</uri>
+      <name>shelf_big</name>
+      <pose>12.853714418162212 13.344740083723337 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0</name>
-      <pose>10.711814879765313 19.717104786802892 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/shelf_big/2</uri>
+      <name>shelf_big_0</name>
+      <pose>-7.8389856307733563 13.048719368355089 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_1</name>
-      <pose>7.5764588864633904 19.466703466709028 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/shelf/1</uri>
+      <name>shelf</name>
+      <pose>3.3983303286567192 21.714838735027168 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_2</name>
-      <pose>5.0224816320006571 20.214955215836291 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/shelf/1</uri>
+      <name>shelf_0</name>
+      <pose>3.281343095423459 18.174482526012333 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_3</name>
-      <pose>1.5361770628732323 19.636536195001675 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/shelf/1</uri>
+      <name>shelf_1</name>
+      <pose>2.7312917956994021 14.111353744383635 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_4</name>
-      <pose>2.7565465967613232 9.8496939556238026 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/shelf/1</uri>
+      <name>shelf_2</name>
+      <pose>2.9849316832926576 10.542117563689988 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_5</name>
-      <pose>7.1913142955019396 8.8922970422907159 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/cart_model_2/2</uri>
+      <name>cart_model2</name>
+      <pose>5.6932629975557489 8.3602930523752761 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_6</name>
-      <pose>-2.7489472826287678 16.358617686797757 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/pallet_box_mobile/3</uri>
+      <name>pallet_box_mobile</name>
+      <pose>-2.6599064465957003 14.035789684060898 0.01 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_7</name>
-      <pose>-3.4831095270707593 11.415471053761493 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/pallet_box_mobile/3</uri>
+      <name>pallet_box_mobile_0</name>
+      <pose>-2.4788573330033952 11.112437484933919 0.01 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_8</name>
-      <pose>-6.8565838330464493 9.6237797034134367 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/pallet_box_mobile/3</uri>
+      <name>pallet_box_mobile_1</name>
+      <pose>-2.7288196032761469 7.7153436406119802 0.01 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_9</name>
-      <pose>-2.7788145677313612 2.0861921089345561 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/shelf_big/2</uri>
+      <name>shelf_big_1</name>
+      <pose>4.8095848791666924 -11.262947496528405 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_10</name>
-      <pose>-8.9106895147812111 18.14300831521097 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/malevisitoronphone/2</uri>
+      <name>MaleVisitorOnPhone</name>
+      <pose>4.1570449528137061 -0.9059617492462646 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_11</name>
-      <pose>4.9338700161922162 1.6048956274361021 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/table/4</uri>
+      <name>Table</name>
+      <pose>5.9512645496322722 -0.97944172663973017 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_12</name>
-      <pose>4.734088278029569 -7.0495018334159418 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/foldable_chair/3</uri>
+      <name>foldable_chair</name>
+      <pose>4.2952450331906453 -0.59768250097439601 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_13</name>
-      <pose>-0.11895088992742586 -5.7419117950963621 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/tugbot-charging-station/2</uri>
+      <name>charging_station</name>
+      <pose>14.958846563067397 -6.0276990063964249 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_14</name>
-      <pose>-7.509986658041865 -7.0558641894631613 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/pallet/2</uri>
+      <name>pallet</name>
+      <pose>0.42432391701756611 -2.7797174588569895 0.070000000000000007 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_15</name>
-      <pose>-8.2807993531781605 -11.621041273180477 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/pallet/2</uri>
+      <name>pallet_0</name>
+      <pose>-1.1391577146513177 -2.7887189942828901 0.070000000000000007 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_16</name>
-      <pose>-3.5392503966006617 -16.686672061688668 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/pallet/2</uri>
+      <name>pallet_1</name>
+      <pose>0.5426383996318469 -5.0244887920873911 0.070000000000000007 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_17</name>
-      <pose>-7.7815585555369111 -20.637268889193184 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/marble_husky_sensor_config_1/1</uri>
+      <name>marble_husky_sensor_config_1</name>
+      <pose>12.297819379544634 -3.1367879795079752 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_18</name>
-      <pose>-6.3463344602465082 -23.713641108422163 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/marble_husky_sensor_config_1/1</uri>
+      <name>marble_husky_sensor_config_1_0</name>
+      <pose>11.611376732225477 -6.3380581742910671 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_19</name>
-      <pose>-3.736717242188933 -22.508198175314664 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/cart_model_2/2</uri>
+      <name>cart_model2_0</name>
+      <pose>10.427746460974562 -2.8042810721593554 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_20</name>
-      <pose>8.3217143038721844 -24.210627499570954 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/cart_model_2/2</uri>
+      <name>cart_model2_1</name>
+      <pose>9.8695529822121681 -5.956062274827719 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_21</name>
-      <pose>5.8010010361026936 -17.737674602468982 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/shelf_big/2</uri>
+      <name>shelf_big_2</name>
+      <pose>-2.2664552439501282 -12.634970234531878 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_22</name>
-      <pose>10.664030569338475 -15.478522132374312 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/pallet_box_mobile/3</uri>
+      <name>pallet_box_mobile_2</name>
+      <pose>-7.033670577098059 -3.820172763402967 0.01 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_23</name>
-      <pose>11.912177791062298 -5.3206112279906499 0 0 0 0</pose>
-    </include>
-    <include>
-      <uri>file:///home/kimhoyun/gazebo_models/aws_robomaker_warehouse_ClutteringC_01</uri>
-      <name>aws_robomaker_warehouse_ClutteringC_01_0_24</name>
-      <pose>10.568292271428454 4.8056391928499398 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/.ignition/fuel/fuel.gazebosim.org/movai/models/shelf/1</uri>
+      <name>shelf_3</name>
+      <pose>-6.711053724343099 -5.3691440955584859 0 0 0 0</pose>
     </include>
     <light name='sun' type='directional'>
       <pose>0 0 10 0 0 0</pose>
@@ -228,3 +368,4 @@
     </light>
   </world>
 </sdf>
+
