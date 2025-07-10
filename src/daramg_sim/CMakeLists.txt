@@ -12,7 +12,6 @@ find_package(rclcpp REQUIRED)
 install(DIRECTORY
   launch
   urdf
-  meshes
   rviz
   worlds
   config
