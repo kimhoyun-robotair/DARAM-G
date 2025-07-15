@@ -4,7 +4,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, SetEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterFile
 from nav2_common.launch import RewrittenYaml
@@ -13,11 +13,24 @@ from launch.conditions import IfCondition
 
 def generate_launch_description() -> LaunchDescription:
     # custom package for autonomous exploration robot simulation
+    pkg_daramg_2d_exploration = get_package_share_directory('daramg_2d_exploration')
+    daramg_exploration_launch_dir = os.path.join(pkg_daramg_2d_exploration, 'launch')
+
     pkg_daramg_sim = get_package_share_directory('daramg_sim')
-    daramg_launch_dir = os.path.join(pkg_daramg_sim, 'launch')
-    # Get the launch directory
-    bringup_dir = get_package_share_directory('nav2_bringup')
-    launch_dir = os.path.join(bringup_dir, 'launch')
+    daramg_sim_launch_dir = os.path.join(pkg_daramg_sim, 'launch')
+
+    pkg_explore = get_package_share_directory('explore_lite')
+    explore_launch_dir = os.path.join(pkg_explore, 'launch')
+
+    rviz_launch_arg = DeclareLaunchArgument(
+        'rviz', default_value='true',
+        description='Open RViz'
+    )
+
+    rviz_config_arg = DeclareLaunchArgument(
+        'rviz_config', default_value='rtabmap_bringup.rviz',
+        description='RViz config file'
+    )
 
     # Launch configuration variables
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -53,15 +66,15 @@ def generate_launch_description() -> LaunchDescription:
     # Declare launch arguments
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time', default_value='True',
-        description='Use simulation (Gazebo) clock if true',
+        description='Use simulation (Gazebo) clock if True',
     )
     declare_params_file_cmd = DeclareLaunchArgument(
         'params_file',
-        default_value=os.path.join(pkg_daramg_sim, 'config', 'simple_rover.yaml'),
+        default_value=os.path.join(pkg_daramg_2d_exploration, 'config', 'simple_rover.yaml'),
         description='Path to the ROS2 parameters file for all nodes',
     )
     declare_autostart_cmd = DeclareLaunchArgument(
-        'autostart', default_value='true',
+        'autostart', default_value='True',
         description='Automatically startup the nav2 stack',
     )
     declare_use_composition_cmd = DeclareLaunchArgument(
@@ -77,6 +90,16 @@ def generate_launch_description() -> LaunchDescription:
     declare_graph_file_cmd = DeclareLaunchArgument(
         'graph',
         default_value='', description='Path to the graph file to load'
+    )
+
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        arguments=['-d', PathJoinSubstitution([pkg_daramg_2d_exploration, 'rviz', LaunchConfiguration('rviz_config')])],
+        condition=IfCondition(LaunchConfiguration('rviz')),
+        parameters=[
+            {'use_sim_time': LaunchConfiguration('use_sim_time')},
+        ]
     )
 
     # Define bringup actions
@@ -95,7 +118,7 @@ def generate_launch_description() -> LaunchDescription:
         # SLAM launch unconditionally
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(daramg_launch_dir, 'spawn_robot.launch.py')
+                os.path.join(daramg_sim_launch_dir, 'spawn_robot.launch.py')
             ),
             launch_arguments={
                 'use_sim_time': use_sim_time,
@@ -103,7 +126,7 @@ def generate_launch_description() -> LaunchDescription:
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(daramg_launch_dir, 'rtab_map.launch.py')
+                os.path.join(daramg_exploration_launch_dir, 'sim_rtabmap.launch.py')
             ),
             launch_arguments={
                 'use_sim_time': use_sim_time,
@@ -112,7 +135,7 @@ def generate_launch_description() -> LaunchDescription:
         # Navigation stack
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(launch_dir, 'navigation_launch.py')
+                os.path.join(daramg_exploration_launch_dir, 'sim_navigation.launch.py')
             ),
             launch_arguments={
                 'use_sim_time': use_sim_time,
@@ -124,12 +147,22 @@ def generate_launch_description() -> LaunchDescription:
                 'container_name': 'nav2_container',
             }.items(),
         ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(explore_launch_dir, 'explore.launch.py')
+            ),
+            launch_arguments={
+                'use_sim_time': use_sim_time,
+            }.items(),
+        ),
     ])
 
     # Assemble LaunchDescription
     ld = LaunchDescription()
     ld.add_action(stdout_linebuf_envvar)
     for cmd in [
+        rviz_launch_arg,
+        rviz_config_arg,
         declare_use_sim_time_cmd,
         declare_graph_file_cmd,
         declare_params_file_cmd,
@@ -137,6 +170,7 @@ def generate_launch_description() -> LaunchDescription:
         declare_use_composition_cmd,
         declare_use_respawn_cmd,
         declare_log_level_cmd,
+        rviz_node
     ]:
         ld.add_action(cmd)
     ld.add_action(bringup_cmd_group)
