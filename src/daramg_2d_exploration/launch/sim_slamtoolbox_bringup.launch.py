@@ -151,14 +151,14 @@ def generate_launch_description() -> LaunchDescription:
                 'container_name': 'nav2_container',
             }.items(),
         ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(explore_launch_dir, 'explore.launch.py')
-            ),
-            launch_arguments={
-                'use_sim_time': use_sim_time,
-            }.items(),
-        ),
+        #IncludeLaunchDescription(
+        #    PythonLaunchDescriptionSource(
+        #        os.path.join(explore_launch_dir, 'explore.launch.py')
+        #    ),
+        #    launch_arguments={
+        #        'use_sim_time': use_sim_time,
+        #    }.items(),
+        #),
     ])
 
     # Assemble LaunchDescription
