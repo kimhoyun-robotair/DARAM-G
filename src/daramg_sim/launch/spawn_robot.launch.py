@@ -1,12 +1,12 @@
 import os
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
+from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
 
@@ -112,18 +112,27 @@ def generate_launch_description():
             "/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry",
             "/joint_states@sensor_msgs/msg/JointState@gz.msgs.Model",
             "/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V",
-            #"/camera/image@sensor_msgs/msg/Image@gz.msgs.Image",
+            # Forwar Camera Topic
+            "/camera/image@sensor_msgs/msg/Image@gz.msgs.Image",
             "/camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
-            "/imu@sensor_msgs/msg/Imu@gz.msgs.IMU",
-            #"/navsat@sensor_msgs/msg/NavSatFix@gz.msgs.NavSat",
-            "/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan",
-            #"/scan/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked",
-            #"/camera/depth_image@sensor_msgs/msg/Image@gz.msgs.Image",
+            "/camera/depth_image@sensor_msgs/msg/Image@gz.msgs.Image",
             "/camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked",
+            # Sensor Module in Mast Topic
+            "/mast_imu@sensor_msgs/msg/Imu@gz.msgs.IMU",
+            "/mast_scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan",
+            #"/mast_scan/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked",
+            "/mast_camera/image@sensor_msgs/msg/Image@gz.msgs.Image",
+            "/mast_camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",            
+            "/mast_camera/depth_image@sensor_msgs/msg/Image@gz.msgs.Image",
+            "/mast_camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked",
         ],
         output="screen",
         parameters=[
             {'use_sim_time': LaunchConfiguration('use_sim_time')},
+        ],
+        remappings=[
+            ('/mast_imu', '/imu'),
+            ('/mast_scan', '/scan'), 
         ]
     )
 
@@ -159,10 +168,14 @@ def generate_launch_description():
         executable='robot_state_publisher',
         name='robot_state_publisher',
         output='screen',
-        parameters=[
-            {'robot_description': Command(['xacro', ' ', urdf_file_path]),
-             'use_sim_time': LaunchConfiguration('use_sim_time')},
-        ],
+        parameters=[{
+            # xacro 결과를 "문자열"로 고정
+            'robot_description': ParameterValue(
+                Command(['xacro', ' ', urdf_file_path]),
+                value_type=str
+            ),
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
+        }],
         remappings=[
             ('/tf', 'tf'),
             ('/tf_static', 'tf_static')
@@ -201,10 +214,10 @@ def generate_launch_description():
     #launchDescriptionObject.add_action(rviz_node)
     launchDescriptionObject.add_action(spawn_urdf_node)
     launchDescriptionObject.add_action(gz_bridge_node)
-    launchDescriptionObject.add_action(gz_image_bridge_node)
-    launchDescriptionObject.add_action(relay_camera_info_node)
+    #launchDescriptionObject.add_action(gz_image_bridge_node)
+    #launchDescriptionObject.add_action(relay_camera_info_node)
     launchDescriptionObject.add_action(robot_state_publisher_node)
-    launchDescriptionObject.add_action(joy)
-    launchDescriptionObject.add_action(joy_teleop)
+    #launchDescriptionObject.add_action(joy)
+    #launchDescriptionObject.add_action(joy_teleop)
 
     return launchDescriptionObject

@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- 전방 RGB-D 카메라 마운트 매크로
+       - parent      : 카메라를 붙일 부모 링크 (기본: chassis)
+       - prefix      : 프레임/토픽 접두사
+       - x,y,z       : parent 기준 장착 위치(미터)
+       - pitch_deg   : 전방 향한 피치 다운 각도(도)
+       - width,height: 이미지 해상도
+       - hfov        : 수평 FOV(라디안)
+       - near,far    : 클리핑 평면(미터)
+       - update      : 업데이트 레이트(Hz)
+       - topic       : 카메라 토픽 루트 이름
+       - visualize   : 가제보 센서 시각화
+  -->
+  <xacro:macro name="mount_rgbd_front"
+               params="parent:='chassis'
+                       prefix:='rgbd_front'
+                       x:=0.35 y:=0.0 z:=0.45
+                       pitch_deg:=15.0
+                       width:=320 height:=240
+                       hfov:=1.05
+                       near:=0.2 far:=8.0
+                       update:=20
+                       topic:='camera'
+                       visualize:=true">
+
+    <!-- 카메라 하우징(바디) 링크를 parent 앞쪽에 고정 장착 + pitch-down -->
+    <joint name="${prefix}_joint" type="fixed">
+      <origin xyz="${x} ${y} ${z}" rpy="0 ${radians(pitch_deg)} 0"/>
+      <parent link="${parent}"/>
+      <child  link="${prefix}_link"/>
+    </joint>
+
+    <link name="${prefix}_link">
+      <!-- 가볍지만 0은 아닌 관성 -->
+      <inertial>
+        <mass value="0.15"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="1.5e-4" iyy="1.5e-4" izz="1.5e-4" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.10 0.04 0.04"/></geometry>
+        <material name="black"><color rgba="0.1 0.1 0.1 1"/></material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.10 0.04 0.04"/></geometry>
+      </collision>
+    </link>
+
+    <!-- Optical frame (z+ forward, x+ right, y+ down) -->
+    <joint name="${prefix}_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679"/>
+      <parent link="${prefix}_link"/>
+      <child  link="${prefix}_optical"/>
+    </joint>
+    <link name="${prefix}_optical"/>
+
+    <!-- Gazebo RGB-D 센서 -->
+    <gazebo reference="${prefix}_link">
+      <sensor name="${prefix}_sensor" type="rgbd_camera">
+        <always_on>1</always_on>
+        <update_rate>${update}</update_rate>
+        <visualize>${visualize}</visualize>
+        <topic>${topic}</topic>
+        <!-- GZ/ROS 프레임 지정 -->
+        <gz_frame_id>${prefix}_link</gz_frame_id>
+        <camera>
+          <horizontal_fov>${hfov}</horizontal_fov>
+          <image>
+            <width>${width}</width>
+            <height>${height}</height>
+          </image>
+          <clip>
+            <near>${near}</near>
+            <far>${far}</far>
+          </clip>
+          <optical_frame_id>${prefix}_optical</optical_frame_id>
+        </camera>
+      </sensor>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>
