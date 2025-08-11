@@ -12,7 +12,6 @@ find_package(daramg_msgs REQUIRED)
 
 install(DIRECTORY
  launch
- config
  DESTINATION share/${PROJECT_NAME}
 )
 
@@ -23,6 +22,7 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   daramg_manipulator/yolo_node.py
   daramg_manipulator/yolo_nav2.py
+  daramg_manipulator/arm_control.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

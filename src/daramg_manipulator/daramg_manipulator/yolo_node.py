@@ -19,7 +19,7 @@ class YoloObbNode(Node):
         # Parameter
         self.declare_parameter('model_path', os.path.join(os.environ['HOME']+
             '/DARAM-G/src/daramg_manipulator/src/best.pt'))
-        self.declare_parameter('conf', 0.70)
+        self.declare_parameter('conf', 0.85)
         self.declare_parameter('image_topic', '/camera/image')
         self.declare_parameter('draw_score', True)
 
