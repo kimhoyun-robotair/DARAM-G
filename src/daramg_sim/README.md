@@ -1,85 +1,35 @@
-# DARAMG-SIM 🌕🤖
----
-A simulation of DARAM-G based on Gazebo Harmonic.
-This package includes:
+# DARAM-G Sim
+## 요구사항 (의존성)
+- Ubuntu 22.04 LTS, ROS2 Humble
+- Gazebo Harmonic, ros_gz (humble branch)
 
-- 🛠️ Modeling files for the DARAM-G rover
+## 패키지 설명
+- 본 메타패키지인 DARAM-G 로버의 소프트웨어를 테스트 하기 위해서 구성된 자체적인 시뮬레이션 패키지이다.
+- 내부에 로버와 로봇팔, 그리고 DARAM-G 로버에 탑재된 각종 센서들을 xacro 및 urdf 형식으로 담고 있다.
+- Gazebo Sim의 world를 launch 하기 위한 `world.launch.py` 파일,
+- URDF에 기반하여 로봇을 world 상에 spawn 하기 위한 `spawn_robot.launch.py` 파일을 담고 있다.
+- `world` 디렉터리 안에 있는 파일들의 경우, `Gazebo Fuel` 등에서 적절한 모델링을 다운로드 받아야 사용 가능하다.
+- 또한, `GZ_SIM_RESOURCE_PATH` 를 적절하게 설정해주어야 제대로 된 시뮬레이션 작동이 가능하다.
+- 만약 `Gazebo Classic` 기반의 시뮬레이션 사용을 원한다면 `daramg_sim_classci` 패키지를 사용하면 된다.
+- 다만, 해당 패키지는 작동이 되는지 여부만 최소한으로 검증하였을 뿐, 그 이상의 복잡한 태스크 및 조작은 검증하지 않아 작동을 담보할 수 없다.
 
-- 🚀 Launch files to run RTAB-Map
-
-- 🧭 Launch files to run AMCL and Nav2
-
-**Refer to this tutorial to first download the files from the offline model repository, then either export the model path to ```GZ_SIM_RESOURCE_PATH``` or add the export command to your ```.bashrc```.**
-
-- https://github.com/MOGI-ROS/Week-3-4-Gazebo-basics?tab=readme-ov-file
-
-**If the model or world file still cannot be opened and shows errors, please open the SDF file and update any hardcoded paths to models, meshes, or other resources so that they point to the correct locations on your system.**
-
-**Also, don’t forget that you must edit the parameters and map files referenced inside the launch files. All launch files currently use the parameters and map files from kimhoyun-robotair’s setup.**
-
----
-
-**Main 1. Running Autonomous Exploration with RTAB-MAP, Nav2, m-Explore 🗺️**
+## 패키지 사용법
+- 기본적인 사용법은 다음과 같다.
 ```bash
-# Terminal 1
-cd /path/to/DARAM-G
-source install/setup.bash
-ros2 launch daramg_sim autonomous_exploration.launch.py
-
-# Terminal 2
-cd /path/to/m-explore-ros2
-source install/setup.bash
-ros2 launch explore_lite explore.launch.py
+$ cd /path/to/DARAM-G
+$ colcon build
+$ source install/setup.bash # or source install/local_setup.bash
+$ ros2 launch daramg_sim spawn_robot.launch.py
 ```
+- 만약, URDF 파일과 world 파일을 다른 것으로 변경하고 싶다면, `spawn_robot.launch.py` 파일 안의 다음 부분을 수정하고 재빌드하라.
+```python
+world_arg = DeclareLaunchArgument(
+    'world', default_value='warehouse_old.sdf',
+    description='Name of the Gazebo world file to load'
+)
 
-**Main 2. Running Autonomous Exploration with slam-toolbox, Nav2, m-Explore 🗺️**
-```bash
-# Terminal 1
-cd /path/to/DARAM-G
-source install/setup.bash
-ros2 launch daramg_sim slamtoolbox_nav2.launch.py
-
-# Terminal 2
-cd /path/to/m-explore-ros2
-source install/setup.bash
-ros2 launch explore_lite explore.launch.py
-```
-
-**2. Running AMCL and Nav2 🧭🤖**
-```bash
-# Terminal 1
-source install/setup.bash
-ros2 launch daramg_sim amcl.launch.py
-
-# Terminal 2
-source install/setup.bash
-ros2 launch daramg_sim navigation.launch.py
-```
-
-**3. Using RTAB-Map and Nav2 without AMCL 💡**
-If you want to use RTAB-Map with Nav2 without AMCL, follow these steps:
-
-- Open rtab_map.launch.py.
-- Set the localization launch argument to True.
-- Do not launch AMCL.
-- Only launch the following two files:
-```bash
-rtab_map.launch.py
-navigation.launch.py
-```
-
-**4. If you want to check whether your robot is functioning properly**
-If you want to verify that your robot is working correctly in both Gazebo and RViz, please run the following commands:
-
-```bash
-source install/setup.bash
-ros2 launch daramg_sim spawn_robot.launch.py
-```
-
-**5. If you want to run Cartographer**
-If you want to perform SLAM using Cartographer, use the following commands:
-
-```bash
-source install/setup.bash
-ros2 launch daramg_sim cartographer.launch.py
+model_arg = DeclareLaunchArgument(
+    'model', default_value='simple_rover.urdf',
+    description='Name of the URDF description to load'
+)
 ```

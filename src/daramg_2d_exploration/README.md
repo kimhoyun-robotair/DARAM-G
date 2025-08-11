@@ -1,10 +1,17 @@
-### daramg_2d_exploration
-2D 자율 탐색 파이프라인 구성을 위한 launch 파일들을 효과적으로 분류하기 위해서 작성하였다.
-다음과 같은 내용으로 구성된다.
+# DARAM-G 2D Exploration
+## 의존성
+- ROS2 Humble (Ubuntu 22.04)
+- Nav2, slam_toolbox, rtabmap_ros
+- m-explore-ros2
 
-1. slam_toolbox 기반 2D 자율 탐색 파이프라인
-2. RTAB-MAP 기반 2D 자율 탐색 파이프라인
-3. RTAB-MAP 기반 멀티 로봇 지도 병합 및 자율 탐색 파이프라인
-
-각각 시뮬레이션과, 현실 하드웨어에서의 launch 파일들과 파라미터 파일들, 
-그리고 시각화를 위한 RViz 파일들이 위치해있다.
+## 설명
+- 2D LiDAR(와 IMU, optional)에 기반한 자율 탐색을 위한 패키지이다.
+- 다음 내용이 포함된다.
+  1. `slam_toolbox`, `nav2`, `m-explore-ros2`를 활용한 자율 탐색
+  2. `rtabmap_ros`, `nav2`, `m-explore-ros2`를 활용한 자율 탐색 
+- 기본적인 사용법은 다음과 같다.
+  ```bash
+  $ cd /DARAM-G
+  $ source install/setup.bash
+  $ ros2 launch daramg_2d_exploration sim_slamtoolbox_bringup.launch.py
+  ```
