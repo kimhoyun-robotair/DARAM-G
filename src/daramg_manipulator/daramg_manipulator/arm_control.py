@@ -19,7 +19,7 @@ class ArmTrajectoryClient(LifecycleNode):
         qos = QoSProfile(depth=1)
         qos.durability = QoSDurabilityPolicy.TRANSIENT_LOCAL
         qos.reliability = ReliabilityPolicy.RELIABLE
-        self._done_pub = self.create_publisher(Bool, 'robotarm_completed', qos)
+        self._done_pub = self.create_publisher(Bool, '/robotarm_completed', qos)
 
         self._action_name = '/arm_controller/follow_joint_trajectory'
         self._client: ActionClient = None

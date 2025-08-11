@@ -8,7 +8,7 @@
        add_ros2_control : true면 ros2_control + gz 플러그인까지 포함
   -->
   <xacro:macro name="robotarm" params="
-      parent:=base_footprint
+      parent:=chassis
       prefix:=arm_
       xyz:='0 0 0'
       rpy:='0 0 0'

@@ -153,7 +153,7 @@ def generate_launch_description() -> LaunchDescription:
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(explore_launch_dir, 'explore.launch.py')
+                os.path.join(explore_launch_dir, 'lifecycle_explore.launch.py')
             ),
             launch_arguments={
                 'use_sim_time': use_sim_time,

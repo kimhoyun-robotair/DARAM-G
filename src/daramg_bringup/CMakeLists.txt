@@ -7,7 +7,21 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(px4_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(lifecycle_msgs REQUIRED)
+
+add_executable(fsm src/2dfsm.cpp)
+ament_target_dependencies(fsm rclcpp rclcpp_lifecycle lifecycle_msgs std_msgs)
+target_compile_features(fsm PUBLIC c_std_99 cxx_std_17)
+install(TARGETS fsm DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

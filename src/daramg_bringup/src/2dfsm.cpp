@@ -1,31 +1,47 @@
 // ============================================================================
-// MultiLifecycleSupervisor (Refactored)
+// Yolo→Arm→Explore Loop Supervisor (ROS2 Lifecycle, C++)
 // ----------------------------------------------------------------------------
-// 요구 흐름(사용자 지정 시나리오):
-//  1. 초기 Phase에서 등록된 모든 Lifecycle 노드들을 CONFIGURE 전환 (병렬 가능)
-//  2. 모든 노드가 Configured 되면 (조건 없이) offboard_control_node ACTIVATE
-//  3. /aruco_tracker_node/ready (std_msgs/Bool) 가 true 로 관측되면 aruco_tracker_node ACTIVATE
-//  4. aruco_tracker_node 가 Active 된 뒤 /precision_land_node/ready (std_msgs/Bool) 가 true 로 관측되면 precision_land_node ACTIVATE
-//  5. precision_land_node 가 Active 되면 offboard_control_node DEACTIVATE
-//  6. /precision_land_node/end (std_msgs/Bool) 가 true 가 되면 모든 노드 DEACTIVATE 후 CLEANUP
+// 요구 시나리오(무한 루프):
+//  1) 시작 → /yolo_nav2 를 CONFIGURE (필요시) → ACTIVATE
+//  2) /yolo_nav2_completed==true 관측 → /yolo_nav2 DEACTIVATE →
+//     /robotarm_control CONFIGURE→ACTIVATE
+//  3) /robotarm_completed==true 관측 → /explore_node CONFIGURE→ACTIVATE
+//  4) /yolo_detect==true 관측 → /explore_node DEACTIVATE→CLEANUP → 1)로 복귀
+//  ※ 사용자가 종료할 때까지 반복
 //
-//  * enum Phase 는 기존 정의를 유지 (요구사항: enum class 고정) 하고, 의미를 본 시나리오에 맞추어 내부 처리만 수정.
-//  * Ready / End 토픽은 아래 규칙 사용:
-//      - 각 노드는 <real_node_name>/ready 를 latched(transient_local) Bool로 발행 (이미 존재)
-//      - precision_land_node 는 landing 종료 시 <real_node_name>/end 를 Bool true 발행
-//  * 신뢰성 향상을 위해:
-//      - Transition 비동기 요청 중복 방지
-//      - Pending transition polling
-//      - Ready 값의 staleness 검출 (옵션: 사용자가 필요시 활성화)
-//      - Phase 변화시 명확한 로그
+// 설계 노트:
+//  - 각 대상 노드는 ROS2 lifecycle 노드(change_state/get_state 서비스 제공)라고 가정
+//  - CONFIGURE는 현재 상태가 UNCONFIGURED일 때만 전송. 이미 configured면 스킵
+//  - 이벤트 토픽(yolo_nav2_completed, robotarm_completed, yolo_detect)은 "상태"가 아니라
+//    "트리거" 성격이므로 **latched(=transient_local) 사용하지 않음**. true 수신 시
+//    즉시 consume(플래그 false로 리셋)하여 중복 트리거를 방지
+//  - 서비스 이름은 절대경로("/name/change_state") 사용
+//  - 시작 시 GetState로 초기 동기화
+//  - 전이 요청은 비동기, 중복 방지, polling으로 결과 반영
+//  - 타임아웃/ABORT 처리 포함
 //
-// 주의: 본 예시는 기본 구조. 실제 환경에서 mission timeout, safety abort, 재시도(backoff) 등
-//       추가 정책은 프로젝트 요구에 따라 확장.
-// ============================================================================
+// 파라미터(ros2 run/launch에서 설정 가능):
+//  - yolo_name            (string, default: "yolo_nav2")
+//  - arm_name             (string, default: "robotarm_control")
+//  - explore_name         (string, default: "explore_node")
+//  - topic_yolo_done      (string, default: "/yolo_nav2_completed")
+//  - topic_arm_done       (string, default: "/robotarm_completed")
+//  - topic_yolo_detect    (string, default: "/yolo_detect")
+//  - deactivate_arm_on_done (bool, default: true)  // 3단계 진입 전에 arm 비활성화 권장
+//  - tick_ms              (int, default: 100)
+//  - timeout_configure_s  (int, default: 20)
+//  - timeout_activate_s   (int, default: 15)
+//
+// 빌드 의존:
+//  - rclcpp
+//  - lifecycle_msgs
+//  - std_msgs
+// ----------------------------------------------------------------------------
 
 #include <chrono>
 #include <unordered_map>
 #include <vector>
+#include <string>
 #include <future>
 #include <optional>
 #include <algorithm>
@@ -33,8 +49,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "lifecycle_msgs/srv/change_state.hpp"
 #include "lifecycle_msgs/srv/get_state.hpp"
-#include "lifecycle_msgs/msg/transition.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
+#include "lifecycle_msgs/msg/transition.hpp"
 #include "std_msgs/msg/bool.hpp"
 
 using namespace std::chrono_literals;
@@ -48,120 +64,116 @@ struct PendingTransition {
   std::string key;          // Managed node key
   uint8_t transition_id;    // Transition id
   rclcpp::Time start_time;  // Dispatch time
-  rclcpp::Client<ChangeState>::SharedFuture future; // Future for async response
+  rclcpp::Client<ChangeState>::SharedFuture future; // async response
 };
 
 struct ManagedNode {
-  std::string key;        // Internal key
-  std::string name;       // Actual ROS node base name
-  std::string change_srv; // change_state service name
-  std::string get_srv;    // get_state service name
+  std::string key;        // internal key
+  std::string name;       // actual node base name
+  std::string change_srv; // "/<name>/change_state"
+  std::string get_srv;    // "/<name>/get_state"
   rclcpp::Client<ChangeState>::SharedPtr change_cli;
   rclcpp::Client<GetState>::SharedPtr get_cli;
 
-  // State flags (lightweight mirror of lifecycle state)
+  // cached state flags
   bool configured = false;
   bool active = false;
-  bool ready = false; // Updated when /<name>/ready true observed
-  bool end_flag = false; // Only used for precision_land_node's /end topic
-
-  rclcpp::Time last_ready_stamp; // For optional staleness checks
 };
 
 // ----------------------------------------------------------------------------
-// Phase enum (Fixed: do not change names / order; only reinterpret meanings)
+// Phase enum
 // ----------------------------------------------------------------------------
 enum class Phase {
-  INIT,                     // Wait minimal time then configure all
-  CONFIG_ALL,               // Wait until all nodes configured
-  ACTIVATE_FLIGHT_CONTROL,  // Activate offboard_control_node
-  WAIT_MISSION_END_READY,   // Wait for /aruco_tracker_node/ready true
-  ACTIVATE_ARUCO_TRACKER,   // Activate aruco_tracker_node
-  ACTIVATE_PRECISION_LAND,  // Wait for /precision_land_node/ready true then activate
-  WAIT_PRECISION_LAND_READY,// After precision_land_node active -> (reuse as synchronization gap)
-  LANDING,                  // precision land active; deactivate offboard, wait landing end
-  SHUTDOWN_CLEANUP,         // Deactivate + cleanup all
-  ABORT                     // Abort (not elaborated here)
+  INIT,
+  PREPARE_YOLO,       // ensure configured
+  ACTIVATE_YOLO,      // activate
+  WAIT_YOLO_DONE,     // wait topic_yolo_done
+  SWITCH_TO_ARM,      // deactivate YOLO → configure+activate ARM
+  WAIT_ARM_DONE,      // wait topic_arm_done
+  START_EXPLORE,      // configure+activate EXPLORE
+  EXPLORE_RUNNING,    // hold until topic_yolo_detect
+  SHUTDOWN_CLEANUP,   // not used in loop, reserved
+  ABORT
 };
 
 // ----------------------------------------------------------------------------
 // Supervisor Node
 // ----------------------------------------------------------------------------
-class MultiLifecycleSupervisor : public rclcpp::Node {
+class YAE_Supervisor : public rclcpp::Node {
 public:
-  MultiLifecycleSupervisor()
-  : Node("multi_lc_supervisor")
+  YAE_Supervisor()
+  : Node("yae_lifecycle_supervisor")
   {
-    // Register nodes (key, actual node name).
-    add_node(OFFBOARD_KEY, "offboard_control", true);
-    add_node(ARUCO_KEY,    "lifecycle_aruco_tracker", true);
-    add_node(PLAND_KEY,    "precision_land_offboard_lifecycle", true);
+    // --- Parameters (declare & get) ---
+    yolo_name_     = declare_parameter<std::string>("yolo_name", "yolo_depth_to_nav");
+    arm_name_      = declare_parameter<std::string>("arm_name",  "arm_trajectory_client");
+    explore_name_  = declare_parameter<std::string>("explore_name", "explore_node");
 
-    // Subscribe ready topics of all nodes.
-    for (auto & kv : nodes_) {
-      const auto topic = "/" + kv.second.name + "/ready";
-      ready_subs_.push_back(
-        create_subscription<std_msgs::msg::Bool>(
-          topic, rclcpp::QoS(1).transient_local(),
-          [this, key = kv.first](std_msgs::msg::Bool::SharedPtr msg){
-            auto & n = nodes_[key];
-            // We accept ready=true only; false can be ignored or used to reset state.
-            if (msg->data) {
-              n.ready = true;
-              n.last_ready_stamp = now();
-              RCLCPP_INFO(get_logger(), "[%s] READY received", key.c_str());
-            }
-          })
-      );
-    }
+    topic_yolo_done_   = declare_parameter<std::string>("topic_yolo_done", "/yolo_nav2_completed");
+    topic_arm_done_    = declare_parameter<std::string>("topic_arm_done",  "/robotarm_completed");
+    topic_yolo_detect_ = declare_parameter<std::string>("topic_yolo_detect","/yolo_detect");
 
-    // Subscribe end topic ONLY for precision landing node
-    end_sub_ = create_subscription<std_msgs::msg::Bool>(
-      "/" + nodes_[PLAND_KEY].name + "/end", rclcpp::QoS(1).transient_local(),
-      [this](std_msgs::msg::Bool::SharedPtr msg){
-        if (msg->data) {
-          nodes_[PLAND_KEY].end_flag = true;
-          RCLCPP_INFO(get_logger(), "[%s] END flag observed", PLAND_KEY);
-        }
-      }
-    );
+    deactivate_arm_on_done_ = declare_parameter<bool>("deactivate_arm_on_done", true);
+
+    const int tick_ms = declare_parameter<int>("tick_ms", 100);
+    timeout_configure_ = rclcpp::Duration(declare_parameter<int>("timeout_configure_s", 20), 0);
+    timeout_activate_  = rclcpp::Duration(declare_parameter<int>("timeout_activate_s", 15), 0);
+
+    // --- Register lifecycle nodes ---
+    add_node(KEY_YOLO,    yolo_name_);
+    add_node(KEY_ARM,     arm_name_);
+    add_node(KEY_EXPLORE, explore_name_);
+
+    // --- Subscribe event topics (non-latched; triggers are consumed) ---
+    auto qos_event = rclcpp::QoS(rclcpp::KeepLast(10)); // Reliable, volatile
+
+    sub_yolo_done_ = create_subscription<std_msgs::msg::Bool>(
+      topic_yolo_done_, qos_event,
+      [this](std_msgs::msg::Bool::ConstSharedPtr msg){
+        if (msg->data) { yolo_done_ = true; RCLCPP_INFO(get_logger(), "[event] yolo_nav2_completed=true"); }
+      });
+
+    sub_arm_done_ = create_subscription<std_msgs::msg::Bool>(
+      topic_arm_done_, qos_event,
+      [this](std_msgs::msg::Bool::ConstSharedPtr msg){
+        if (msg->data) { arm_done_ = true; RCLCPP_INFO(get_logger(), "[event] robotarm_completed=true"); }
+      });
+
+    sub_yolo_detect_ = create_subscription<std_msgs::msg::Bool>(
+      topic_yolo_detect_, qos_event,
+      [this](std_msgs::msg::Bool::ConstSharedPtr msg){
+        if (msg->data) { yolo_detect_ = true; RCLCPP_INFO(get_logger(), "[event] yolo_detect=true"); }
+      });
+
+    // Initial state sync
+    sync_initial_states();
 
     phase_ = Phase::INIT;
     phase_enter_time_ = now();
 
-    tick_timer_ = create_wall_timer(100ms, std::bind(&MultiLifecycleSupervisor::tick, this));
-    RCLCPP_INFO(get_logger(), "Supervisor initialized.");
+    tick_timer_ = create_wall_timer(std::chrono::milliseconds(tick_ms), std::bind(&YAE_Supervisor::tick, this));
+    RCLCPP_INFO(get_logger(), "YAE Supervisor initialized (Yolo→Arm→Explore loop)");
   }
 
 private:
-  // --------------------------------------------------------------------------
-  // Constants / Keys
-  // --------------------------------------------------------------------------
-  static constexpr const char * OFFBOARD_KEY = "offboard_control_node";
-  static constexpr const char * ARUCO_KEY    = "aruco_tracker_node";
-  static constexpr const char * PLAND_KEY    = "precision_land_node";
+  // Keys
+  static constexpr const char* KEY_YOLO    = "yolo";
+  static constexpr const char* KEY_ARM     = "arm";
+  static constexpr const char* KEY_EXPLORE = "explore";
 
-  // Timeouts (tunable)
-  static constexpr std::chrono::seconds CONFIG_TIMEOUT{20};
-  static constexpr std::chrono::seconds ACTIVATE_TIMEOUT{15};
-
-  // --------------------------------------------------------------------------
-  // Node registration
-  // --------------------------------------------------------------------------
-  void add_node(const std::string & key, const std::string & name, bool /*required*/) {
+  // --- Node registry ---
+  void add_node(const std::string & key, const std::string & name) {
     ManagedNode mn;
     mn.key = key;
     mn.name = name;
-    mn.change_srv = name + "/change_state";
-    mn.get_srv    = name + "/get_state";
+    mn.change_srv = "/" + name + "/change_state";
+    mn.get_srv    = "/" + name + "/get_state";
     mn.change_cli = create_client<ChangeState>(mn.change_srv);
     mn.get_cli    = create_client<GetState>(mn.get_srv);
     nodes_[key] = std::move(mn);
   }
 
-  // --------------------------------------------------------------------------
-  // Helpers
-  // --------------------------------------------------------------------------
+  // --- Helpers ---
   rclcpp::Time now() { return get_clock()->now(); }
   rclcpp::Duration in_phase() { return now() - phase_enter_time_; }
 
@@ -172,23 +184,17 @@ private:
     phase_enter_time_ = now();
   }
 
-  bool all_configured() const {
-    for (auto & kv : nodes_) if (!kv.second.configured) return false; return true;
-  }
-
-  bool all_deactivated() const {
-    for (auto & kv: nodes_) if (kv.second.active) return false; return true;
-  }
-
   bool is_transition_pending(const std::string & key, uint8_t id) const {
     return std::any_of(pending_.begin(), pending_.end(), [&](auto & p){ return p.key==key && p.transition_id==id; });
   }
 
   void dispatch_transition(const std::string & key, uint8_t transition_id) {
-    auto & mn = nodes_.at(key);
+    auto it = nodes_.find(key);
+    if (it == nodes_.end()) return;
+    auto & mn = it->second;
     if (is_transition_pending(key, transition_id)) return; // prevent duplicate
     if (!mn.change_cli->wait_for_service(1s)) {
-      RCLCPP_WARN(get_logger(), "[%s] change_state service unavailable", key.c_str());
+      RCLCPP_WARN(get_logger(), "[%s] change_state service unavailable: %s", key.c_str(), mn.change_srv.c_str());
       return;
     }
     auto req = std::make_shared<ChangeState::Request>();
@@ -207,19 +213,8 @@ private:
         bool ok = resp->success;
         RCLCPP_INFO(get_logger(), "[%s] Transition %u result: %s", it->key.c_str(), it->transition_id, ok?"SUCCESS":"FAIL");
         if (ok) {
-          switch (it->transition_id) {
-            case lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE:
-              mn.configured = true; break;
-            case lifecycle_msgs::msg::Transition::TRANSITION_CLEANUP:
-              mn.configured = false; mn.active = false; mn.ready = false; break;
-            case lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE:
-              mn.active = true; break;
-            case lifecycle_msgs::msg::Transition::TRANSITION_DEACTIVATE:
-              mn.active = false; break;
-            default: break;
-          }
+          apply_local_flags(mn, it->transition_id);
         } else {
-          // 단순: 실패 시 즉시 ABORT (요구 사항에 재시도 없음)
           RCLCPP_ERROR(get_logger(), "[%s] Transition %u failed -> ABORT", it->key.c_str(), it->transition_id);
           change_phase(Phase::ABORT);
         }
@@ -230,140 +225,221 @@ private:
     }
   }
 
-  void abort_all_safe() {
-    for (auto & kv : nodes_) {
-      if (kv.second.active) {
-        dispatch_transition(kv.first, lifecycle_msgs::msg::Transition::TRANSITION_DEACTIVATE);
+  void apply_local_flags(ManagedNode & mn, uint8_t transition_id) {
+    using lifecycle_msgs::msg::Transition;
+    switch (transition_id) {
+      case Transition::TRANSITION_CONFIGURE:
+        mn.configured = true; mn.active = false; break;
+      case Transition::TRANSITION_CLEANUP:
+        mn.configured = false; mn.active = false; break;
+      case Transition::TRANSITION_ACTIVATE:
+        mn.active = true; mn.configured = true; break;
+      case Transition::TRANSITION_DEACTIVATE:
+        mn.active = false; /* configured stays true */ break;
+      default: break;
+    }
+  }
+
+  void sync_initial_states() {
+    for (auto &kv : nodes_) {
+      auto &mn = kv.second;
+      if (!mn.get_cli->wait_for_service(1s)) continue;
+      auto fut = mn.get_cli->async_send_request(std::make_shared<GetState::Request>());
+      if (fut.wait_for(500ms) == std::future_status::ready) {
+        auto id = fut.get()->current_state.id;
+        mn.configured = (id == lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE ||
+                         id == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE);
+        mn.active = (id == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE);
+        RCLCPP_INFO(get_logger(), "[%s] initial state: configured=%d active=%d", kv.first.c_str(), (int)mn.configured, (int)mn.active);
       }
     }
   }
 
-  // --------------------------------------------------------------------------
-  // Main FSM tick
-  // --------------------------------------------------------------------------
+  // convenience guards
+  void ensure_configured(const std::string & key) {
+    auto &mn = nodes_.at(key);
+    if (!mn.configured) {
+      dispatch_transition(key, lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE);
+    }
+  }
+  void ensure_active(const std::string & key) {
+    auto &mn = nodes_.at(key);
+    if (!mn.active) {
+      dispatch_transition(key, lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE);
+    }
+  }
+  void ensure_deactivated(const std::string & key) {
+    auto &mn = nodes_.at(key);
+    if (mn.active) {
+      dispatch_transition(key, lifecycle_msgs::msg::Transition::TRANSITION_DEACTIVATE);
+    }
+  }
+  void ensure_cleanup(const std::string & key) {
+    auto &mn = nodes_.at(key);
+    if (mn.configured) {
+      dispatch_transition(key, lifecycle_msgs::msg::Transition::TRANSITION_CLEANUP);
+    }
+  }
+
+  bool all_idle() const {
+    for (auto &kv : nodes_) if (kv.second.active) return false; return true;
+  }
+
+  // --- FSM tick ---
   void tick() {
     poll_transitions();
 
     switch (phase_) {
-    case Phase::INIT: {
-      // 바로 CONFIGURE 전송 (원한다면 소량 대기)
-      if (in_phase() > 1s) {
-        for (auto & kv : nodes_) {
-          if (!kv.second.configured)
-            dispatch_transition(kv.first, lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE);
+      case Phase::INIT: {
+        // 바로 YOLO 준비로 진입
+        change_phase(Phase::PREPARE_YOLO);
+        break; }
+
+      case Phase::PREPARE_YOLO: {
+        ensure_configured(KEY_YOLO);
+        // timeout for CONFIGURE
+        if (nodes_[KEY_YOLO].configured) {
+          change_phase(Phase::ACTIVATE_YOLO);
+        } else if (in_phase() > timeout_configure_) {
+          RCLCPP_ERROR(get_logger(), "YOLO CONFIGURE timeout -> ABORT");
+          change_phase(Phase::ABORT);
         }
-        change_phase(Phase::CONFIG_ALL);
-      }
-      break; }
+        break; }
 
-    case Phase::CONFIG_ALL: {
-      if (all_configured()) {
-        // 조건 없이 offboard 활성화
-        dispatch_transition(OFFBOARD_KEY, lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE);
-        change_phase(Phase::ACTIVATE_FLIGHT_CONTROL);
-      } else if (in_phase() > CONFIG_TIMEOUT) {
-        RCLCPP_ERROR(get_logger(), "CONFIG timeout -> ABORT");
-        change_phase(Phase::ABORT);
-      }
-      break; }
+      case Phase::ACTIVATE_YOLO: {
+        ensure_active(KEY_YOLO);
+        if (nodes_[KEY_YOLO].active) {
+          // 새 라운드 시작: 이전 라운드 잔여 이벤트 플래그는 수동 초기화
+          yolo_done_ = false; arm_done_ = false; yolo_detect_ = false;
+          change_phase(Phase::WAIT_YOLO_DONE);
+        } else if (in_phase() > timeout_activate_) {
+          RCLCPP_ERROR(get_logger(), "YOLO ACTIVATE timeout -> ABORT");
+          change_phase(Phase::ABORT);
+        }
+        break; }
 
-    case Phase::ACTIVATE_FLIGHT_CONTROL: {
-      auto & off = nodes_[OFFBOARD_KEY];
-      // active 플래그는 transition 성공 시 설정됨
-      if (off.active) {
-        // 다음 단계: aruco_tracker_node ready 관측 대기
-        change_phase(Phase::WAIT_MISSION_END_READY);
-      } else if (in_phase() > ACTIVATE_TIMEOUT) {
-        RCLCPP_ERROR(get_logger(), "Offboard ACTIVATE timeout -> ABORT");
-        change_phase(Phase::ABORT);
-      }
-      break; }
+      case Phase::WAIT_YOLO_DONE: {
+        if (yolo_done_) {
+          yolo_done_ = false; // consume
+          // 1) YOLO deactivate
+          ensure_deactivated(KEY_YOLO);
+          // 2) switch to ARM
+          change_phase(Phase::SWITCH_TO_ARM);
+        }
+        break; }
 
-    case Phase::WAIT_MISSION_END_READY: {
-      // 시나리오 정의: /aruco_tracker_node/ready true -> aruco ACTIVATE
-      auto & aruco = nodes_[ARUCO_KEY];
-      if (aruco.ready && !aruco.active) {
-        dispatch_transition(ARUCO_KEY, lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE);
-        change_phase(Phase::ACTIVATE_ARUCO_TRACKER);
-      }
-      break; }
+      case Phase::SWITCH_TO_ARM: {
+        // ensure YOLO really inactive before moving on
+        if (!nodes_[KEY_YOLO].active) {
+          ensure_configured(KEY_ARM);
+          if (nodes_[KEY_ARM].configured) {
+            ensure_active(KEY_ARM);
+            if (nodes_[KEY_ARM].active) {
+              arm_done_ = false; // start waiting fresh
+              change_phase(Phase::WAIT_ARM_DONE);
+            }
+          }
+          // timeouts
+          if (!nodes_[KEY_ARM].configured && in_phase() > timeout_configure_) {
+            RCLCPP_ERROR(get_logger(), "ARM CONFIGURE timeout -> ABORT");
+            change_phase(Phase::ABORT);
+          }
+          if (!nodes_[KEY_ARM].active && in_phase() > timeout_activate_) {
+            RCLCPP_ERROR(get_logger(), "ARM ACTIVATE timeout -> ABORT");
+            change_phase(Phase::ABORT);
+          }
+        }
+        break; }
 
-    case Phase::ACTIVATE_ARUCO_TRACKER: {
-      auto & aruco = nodes_[ARUCO_KEY];
-      if (aruco.active) {
-        change_phase(Phase::ACTIVATE_PRECISION_LAND);
-      } else if (in_phase() > ACTIVATE_TIMEOUT) {
-        RCLCPP_ERROR(get_logger(), "Aruco ACTIVATE timeout -> ABORT");
-        change_phase(Phase::ABORT);
-      }
-      break; }
+      case Phase::WAIT_ARM_DONE: {
+        if (arm_done_) {
+          arm_done_ = false; // consume
+          if (deactivate_arm_on_done_) {
+            ensure_deactivated(KEY_ARM);
+          }
+          change_phase(Phase::START_EXPLORE);
+        }
+        break; }
 
-    case Phase::ACTIVATE_PRECISION_LAND: {
-      // /precision_land_node/ready true 관측되면 precision_land_node ACTIVATE
-      auto & plan = nodes_[PLAND_KEY];
-      if (plan.ready && !plan.active) {
-        dispatch_transition(PLAND_KEY, lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE);
-        change_phase(Phase::WAIT_PRECISION_LAND_READY);
-      }
-      break; }
+      case Phase::START_EXPLORE: {
+        // Make sure ARM is deactivated if requested
+        if (deactivate_arm_on_done_ && nodes_[KEY_ARM].active) break; // wait until deactivated
 
-    case Phase::WAIT_PRECISION_LAND_READY: {
-      auto & plan = nodes_[PLAND_KEY];
-      if (plan.active) {
-        // precision land 활성화되었으므로 offboard 비활성화 (요구 5)
-        dispatch_transition(OFFBOARD_KEY, lifecycle_msgs::msg::Transition::TRANSITION_DEACTIVATE);
-        change_phase(Phase::LANDING);
-      } else if (in_phase() > ACTIVATE_TIMEOUT) {
-        RCLCPP_ERROR(get_logger(), "Precision land ACTIVATE timeout -> ABORT");
-        change_phase(Phase::ABORT);
-      }
-      break; }
+        ensure_configured(KEY_EXPLORE);
+        if (nodes_[KEY_EXPLORE].configured) {
+          ensure_active(KEY_EXPLORE);
+          if (nodes_[KEY_EXPLORE].active) {
+            yolo_detect_ = false; // fresh wait
+            change_phase(Phase::EXPLORE_RUNNING);
+          }
+        }
+        if (!nodes_[KEY_EXPLORE].configured && in_phase() > timeout_configure_) {
+          RCLCPP_ERROR(get_logger(), "EXPLORE CONFIGURE timeout -> ABORT");
+          change_phase(Phase::ABORT);
+        }
+        if (!nodes_[KEY_EXPLORE].active && in_phase() > timeout_activate_) {
+          RCLCPP_ERROR(get_logger(), "EXPLORE ACTIVATE timeout -> ABORT");
+          change_phase(Phase::ABORT);
+        }
+        break; }
 
-    case Phase::LANDING: {
-      // landing 진행 중: /precision_land_node/end true 이면 종료 절차
-      auto & plan = nodes_[PLAND_KEY];
-      if (plan.end_flag) {
-        // 모든 노드 deactivate -> cleanup
-        for (auto & kv : nodes_) {
-          if (kv.second.active)
+      case Phase::EXPLORE_RUNNING: {
+        if (yolo_detect_) {
+          yolo_detect_ = false; // consume
+          // stop explore → cleanup
+          ensure_deactivated(KEY_EXPLORE);
+          // wait until inactive then cleanup once
+          if (!nodes_[KEY_EXPLORE].active) {
+            ensure_cleanup(KEY_EXPLORE);
+            // when cleanup confirmed, loop back
+            if (!nodes_[KEY_EXPLORE].configured) {
+              change_phase(Phase::PREPARE_YOLO);
+            }
+          }
+        }
+        break; }
+
+      case Phase::SHUTDOWN_CLEANUP: {
+        if (all_idle()) {
+          for (auto &kv: nodes_) if (kv.second.configured) ensure_cleanup(kv.first);
+        }
+        break; }
+
+      case Phase::ABORT: {
+        if (!abort_executed_) {
+          RCLCPP_ERROR(get_logger(), "ABORT entered → safe deactivation");
+          for (auto &kv : nodes_) if (kv.second.active)
             dispatch_transition(kv.first, lifecycle_msgs::msg::Transition::TRANSITION_DEACTIVATE);
+          abort_executed_ = true;
         }
-        change_phase(Phase::SHUTDOWN_CLEANUP);
-      }
-      break; }
-
-    case Phase::SHUTDOWN_CLEANUP: {
-      if (all_deactivated()) {
-        for (auto & kv : nodes_) {
-          if (kv.second.configured)
-            dispatch_transition(kv.first, lifecycle_msgs::msg::Transition::TRANSITION_CLEANUP);
-        }
-        // Optional: 종료 상태 유지 혹은 노드 종료 유도
-      }
-      break; }
-
-    case Phase::ABORT: {
-      if (!abort_executed_) {
-        RCLCPP_ERROR(get_logger(), "ABORT state entered. Attempting safe deactivation.");
-        abort_all_safe();
-        abort_executed_ = true;
-      }
-      break; }
+        break; }
     }
   }
 
-  // --------------------------------------------------------------------------
-  // Members
-  // --------------------------------------------------------------------------
+  // --- Members ---
   Phase phase_;
   rclcpp::Time phase_enter_time_;
 
   std::unordered_map<std::string, ManagedNode> nodes_;
-  std::vector<rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr> ready_subs_;
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr end_sub_;
-
   std::vector<PendingTransition> pending_;
   rclcpp::TimerBase::SharedPtr tick_timer_;
+
+  // params
+  std::string yolo_name_, arm_name_, explore_name_;
+  std::string topic_yolo_done_, topic_arm_done_, topic_yolo_detect_;
+  bool deactivate_arm_on_done_ = true;
+  rclcpp::Duration timeout_configure_{20,0};
+  rclcpp::Duration timeout_activate_{15,0};
+
+  // events (consumed flags)
+  bool yolo_done_   = false;
+  bool arm_done_    = false;
+  bool yolo_detect_ = false;
+
+  // subs
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_yolo_done_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_arm_done_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_yolo_detect_;
 
   bool abort_executed_ = false;
 };
@@ -374,7 +450,7 @@ private:
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<MultiLifecycleSupervisor>();
+  auto node = std::make_shared<YAE_Supervisor>();
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;
