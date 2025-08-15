@@ -25,7 +25,7 @@
                        cam_hfov:=1.05 cam_w:=640 cam_h:=480
                        cam_near:=0.25 cam_far:=12.0 cam_update:=20 cam_topic:='mast_camera'
                        scan_update:=12 scan_topic:='mast_scan'
-                       imu_update:=50 imu_topic:='mast_imu'">
+                       imu_update:=100 imu_topic:='mast_imu'">
 
     <!-- 0) 마스트(기둥) -->
     <joint name="${prefix}_pillar_joint" type="fixed">
