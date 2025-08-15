@@ -30,7 +30,7 @@ def generate_launch_description():
     # Get the launch directory
     my_nav_dir = get_package_share_directory('daramg_bringup')
     my_param_dir = os.path.join(my_nav_dir, 'config')
-    my_param_file = 'simple_rover.yaml'
+    my_param_file = 'rover.yaml'
 
     namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')

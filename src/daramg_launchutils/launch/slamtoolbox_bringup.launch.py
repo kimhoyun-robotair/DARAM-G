@@ -32,7 +32,7 @@ def generate_launch_description() -> LaunchDescription:
     )
 
     rviz_config_arg = DeclareLaunchArgument(
-        'rviz_config', default_value='exploration2d.rviz',
+        'rviz_config', default_value='exploration3d.rviz',
         description='RViz config file'
     )
 
@@ -74,7 +74,7 @@ def generate_launch_description() -> LaunchDescription:
     )
     declare_params_file_cmd = DeclareLaunchArgument(
         'params_file',
-        default_value=os.path.join(pkg_daramg_2d_exploration, 'config', 'simple_rover.yaml'),
+        default_value=os.path.join(pkg_daramg_2d_exploration, 'config', 'rover.yaml'),
         description='Path to the ROS2 parameters file for all nodes',
     )
     declare_autostart_cmd = DeclareLaunchArgument(
