@@ -13,7 +13,7 @@ from launch.conditions import IfCondition
 
 def generate_launch_description() -> LaunchDescription:
     # custom package for autonomous exploration robot simulation
-    pkg_daramg_2d_exploration = get_package_share_directory('daramg_2d_exploration')
+    pkg_daramg_2d_exploration = get_package_share_directory('daramg_bringup')
     daramg_exploration_launch_dir = os.path.join(pkg_daramg_2d_exploration, 'launch')
 
     pkg_daramg_sim = get_package_share_directory('daramg_sim')
@@ -32,7 +32,7 @@ def generate_launch_description() -> LaunchDescription:
     )
 
     rviz_config_arg = DeclareLaunchArgument(
-        'rviz_config', default_value='rtabmap_bringup.rviz',
+        'rviz_config', default_value='exploration2d.rviz',
         description='RViz config file'
     )
 
