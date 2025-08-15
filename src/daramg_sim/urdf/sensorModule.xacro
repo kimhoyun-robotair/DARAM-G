@@ -22,7 +22,7 @@
                        prefix:='mast'
                        x:=0.0 y:=0.0 z:=0.55
                        mast_x:=0.10 mast_y:=0.10 mast_z:=0.15
-                       cam_hfov:=1.05 cam_w:=320 cam_h:=240
+                       cam_hfov:=1.05 cam_w:=640 cam_h:=480
                        cam_near:=0.25 cam_far:=12.0 cam_update:=20 cam_topic:='mast_camera'
                        scan_update:=12 scan_topic:='mast_scan'
                        imu_update:=50 imu_topic:='mast_imu'">
@@ -94,7 +94,7 @@
           <horizontal_fov>${cam_hfov}</horizontal_fov>
           <image><width>${cam_w}</width><height>${cam_h}</height></image>
           <clip><near>${cam_near}</near><far>${cam_far}</far></clip>
-          <optical_frame_id>${prefix}_rgbd_optical</optical_frame_id>
+          <optical_frame_id>${prefix}_rgbd_link</optical_frame_id>
         </camera>
       </sensor>
     </gazebo>

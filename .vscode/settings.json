@@ -120,5 +120,6 @@
         "hash_map": "cpp",
         "hash_set": "cpp"
     },
-    "ros.distro": "humble"
+    "ros.distro": "humble",
+    "cmake.sourceDirectory": "/home/kimhoyun/DARAM-G/src/daramg_manipulator"
 }

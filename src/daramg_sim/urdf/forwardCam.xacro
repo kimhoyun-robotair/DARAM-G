@@ -77,7 +77,7 @@
             <near>${near}</near>
             <far>${far}</far>
           </clip>
-          <optical_frame_id>${prefix}_optical</optical_frame_id>
+          <optical_frame_id>${prefix}_link</optical_frame_id>
         </camera>
       </sensor>
     </gazebo>
