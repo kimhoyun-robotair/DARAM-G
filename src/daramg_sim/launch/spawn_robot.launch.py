@@ -10,10 +10,10 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
 
-    pkg_simple_rover = get_package_share_directory('daramg_sim')
+    pkg_daramg_sim = get_package_share_directory('daramg_sim')
     pkg_share = FindPackageShare(package='daramg_sim').find('daramg_sim')
 
-    gazebo_models_path, ignore_last_dir = os.path.split(pkg_simple_rover)
+    gazebo_models_path, ignore_last_dir = os.path.split(pkg_daramg_sim)
     os.environ["GZ_SIM_RESOURCE_PATH"] += os.pathsep + gazebo_models_path
     joy_teleop_config_file = os.path.join(pkg_share, 'config/MXswitch.config.yaml')
 
@@ -61,14 +61,14 @@ def generate_launch_description():
 
     # Define the path to your URDF or Xacro file
     urdf_file_path = PathJoinSubstitution([
-        pkg_simple_rover,  # Replace with your package name
+        pkg_daramg_sim,  # Replace with your package name
         "urdf",
         LaunchConfiguration('model')  # Replace with your URDF or Xacro file
     ])
 
     world_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(pkg_simple_rover, 'launch', 'world.launch.py'),
+            os.path.join(pkg_daramg_sim, 'launch', 'world.launch.py'),
         ),
         launch_arguments={
         'world': LaunchConfiguration('world'),
@@ -79,7 +79,7 @@ def generate_launch_description():
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
-        arguments=['-d', PathJoinSubstitution([pkg_simple_rover, 'rviz', LaunchConfiguration('rviz_config')])],
+        arguments=['-d', PathJoinSubstitution([pkg_daramg_sim, 'rviz', LaunchConfiguration('rviz_config')])],
         condition=IfCondition(LaunchConfiguration('rviz')),
         parameters=[
             {'use_sim_time': LaunchConfiguration('use_sim_time')},

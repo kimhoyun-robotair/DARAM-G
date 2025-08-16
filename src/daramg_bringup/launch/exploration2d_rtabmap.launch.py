@@ -4,7 +4,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument, GroupAction, IncludeLaunchDescription,
-    SetEnvironmentVariable, SetLaunchConfiguration
+    SetEnvironmentVariable, SetLaunchConfiguration, TimerAction
 )
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
@@ -21,11 +21,11 @@ def generate_launch_description() -> LaunchDescription:
     pkg_daramg_sim = get_package_share_directory('daramg_sim')
     daramg_sim_launch_dir = os.path.join(pkg_daramg_sim, 'launch')
 
-    pkg_explore = get_package_share_directory('turtlebot_exploration_3d')
+    pkg_explore = get_package_share_directory('explore_lite')
     explore_launch_dir = os.path.join(pkg_explore, 'launch')
 
-    slam_toolbox_dir = get_package_share_directory('slam_toolbox')
-    slam_launch_dir = os.path.join(slam_toolbox_dir, 'launch')
+    rtabmap_dir = get_package_share_directory('daramg_bringup')
+    rtab_launch_dir = os.path.join(rtabmap_dir, 'launch')
 
     # 새 토글
     declare_using_sim_cmd = DeclareLaunchArgument(
@@ -33,8 +33,15 @@ def generate_launch_description() -> LaunchDescription:
         description='Run with simulation and set use_sim_time=true'
     )
 
+    declare_controllers_file_cmd = DeclareLaunchArgument(
+        'controllers_file',
+        default_value=os.path.join(pkg_daramg_sim, 'config', 'controllers.yaml'),
+        description='ros2_control controllers.yaml for arm_controller'
+    )
+    controllers_file = LaunchConfiguration('controllers_file')
+
     rviz_launch_arg = DeclareLaunchArgument('rviz', default_value='True', description='Open RViz')
-    rviz_config_arg = DeclareLaunchArgument('rviz_config', default_value='exploration3d.rviz', description='RViz config file')
+    rviz_config_arg = DeclareLaunchArgument('rviz_config', default_value='exploration2d.rviz', description='RViz config file')
 
     using_sim = LaunchConfiguration('using_sim')
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -79,6 +86,35 @@ def generate_launch_description() -> LaunchDescription:
     force_sim_time_true = SetLaunchConfiguration('use_sim_time', 'True', condition=IfCondition(using_sim))
     force_sim_time_false = SetLaunchConfiguration('use_sim_time', 'False', condition=UnlessCondition(using_sim))
 
+    # joint_state_broadcaster 먼저
+    jsb_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=[
+            'joint_state_broadcaster',
+            '--controller-manager', '/controller_manager'
+        ],
+        output='screen',
+        condition=IfCondition(using_sim),
+    )
+
+    # arm_controller (controllers.yaml 사용)
+    arm_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=[
+            'arm_controller',
+            '--controller-manager', '/controller_manager',
+            '--param-file', controllers_file
+        ],
+        output='screen',
+        condition=IfCondition(using_sim),
+    )
+
+    # 약간 늦게 실행 (gz_ros2_control이 controller_manager 준비할 시간)
+    spawn_jsb_after = TimerAction(period=4.0, actions=[jsb_spawner])
+    spawn_arm_after = TimerAction(period=5.0, actions=[arm_spawner])
+
     bringup_cmd_group = GroupAction([
         Node(
             condition=IfCondition(use_composition),
@@ -100,7 +136,7 @@ def generate_launch_description() -> LaunchDescription:
 
         # SLAM (공용; 필요하면 여기도 조건 분기 가능)
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(slam_launch_dir, 'online_sync_launch.py')),
+            PythonLaunchDescriptionSource(os.path.join(rtab_launch_dir, 'rtabmap_lidar.launch.py')),
             launch_arguments={'use_sim_time': use_sim_time}.items(),
         ),
 
@@ -120,9 +156,11 @@ def generate_launch_description() -> LaunchDescription:
 
         # Explore (공용)
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(explore_launch_dir, 'turtlebot_exploration_3d.launch.py')),
+            PythonLaunchDescriptionSource(os.path.join(explore_launch_dir, 'explore.launch.py')),
             launch_arguments={'use_sim_time': use_sim_time}.items(),
         ),
+        spawn_jsb_after,
+        spawn_arm_after,
     ])
     
     # If you want to using RViz, Plz uncommnet these
@@ -141,6 +179,7 @@ def generate_launch_description() -> LaunchDescription:
         rviz_launch_arg,
         rviz_config_arg,
         declare_use_sim_time_cmd,
+        declare_controllers_file_cmd,
         declare_graph_file_cmd,
         declare_params_file_cmd,
         declare_autostart_cmd,
