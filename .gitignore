@@ -4,7 +4,8 @@ install/
 log/
 .devenv/
 .colcon_workspace
-.vscode/
+.vscode/c_cpp_properties.json
+.vscode/settings.json
 
 # Ignore Python cache files
 __pycache__/
