@@ -12,7 +12,7 @@ def launch_setup(context, *args, **kwargs):
     icp_odometry = icp_odometry == 'True' or icp_odometry == 'true'
     
     parameters={
-          'frame_id':'base_footprint',
+          'frame_id':'base_link',
           'use_sim_time':use_sim_time,
           'subscribe_depth':False,
           'subscribe_rgb':False,
@@ -68,7 +68,7 @@ def generate_launch_description():
 
         # Launch arguments
         DeclareLaunchArgument(
-            'use_sim_time', default_value='true',
+            'use_sim_time', default_value='false',
             description='Use simulation (Gazebo) clock if true'),
         
         DeclareLaunchArgument(
