@@ -19,9 +19,9 @@ class YoloObbNode(Node):
 
         # Parameters
         self.declare_parameter('model_path', os.path.join(os.environ['HOME']+
-            '/DARAM-G/src/daramg_manipulator/src/weights.pt'))
-        self.declare_parameter('conf', 0.85)
-        self.declare_parameter('image_topic', '/camera/image')
+            '/DARAM-G/src/daramg_manipulator/src/coke.pt'))
+        self.declare_parameter('conf', 0.75)  # confidence threshold
+        self.declare_parameter('image_topic', '/camera/camera/color/image_raw')
         self.declare_parameter('draw_score', True)
 
         # yolo_detect event params
