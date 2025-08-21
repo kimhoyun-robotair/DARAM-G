@@ -19,7 +19,7 @@ class YoloObbNode(Node):
 
         # Parameters
         self.declare_parameter('model_path', os.path.join(os.environ['HOME']+
-            '/DARAM-G/src/daramg_manipulator/src/coke.pt'))
+            '/DARAM-G/src/daramg_yolo/src/coke.pt'))
         self.declare_parameter('conf', 0.75)  # confidence threshold
         self.declare_parameter('image_topic', '/camera/camera/color/image_raw')
         self.declare_parameter('draw_score', True)

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(daramg_manipulator)
+project(daramg_yolo)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -10,19 +10,18 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(daramg_msgs REQUIRED)
 
-install(DIRECTORY
- launch
- DESTINATION share/${PROJECT_NAME}
-)
+#install(DIRECTORY
+# launch
+# DESTINATION share/${PROJECT_NAME}
+#)
 
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
 
 # Install Python executables
 install(PROGRAMS
-  daramg_manipulator/yolo_node.py
-  daramg_manipulator/yolo_nav2.py
-  daramg_manipulator/arm_control.py
+  src/yolo_node.py
+  src/yolo_nav2.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
