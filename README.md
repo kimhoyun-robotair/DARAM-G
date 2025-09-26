@@ -1,5 +1,7 @@
-# DARAM-G
+# DARAM-G Mk.II
 ### Description
+- DARAM-G Mk.II는 한국정보통신공학회에서 주최한 Physical AI Challenge에 나가기 위한 프로젝트이다.
+- 해당 프로젝트는 로봇팔과 카메라에 기반해 
 - DARAM-G (Dynamic Autonomous Rover for Active Mapping – Geospatial)는 자율적으로 미지의 공간을 탐사하며 지도를 그리는 로버 개발 프로젝트이다.
 - 이러한 목적을 가지고 개발된 로버를 DARAM-G Mk.I으로 정의한다.
 - DARAM-G 로버는 인하대학교 항공우주공학과 김호윤, 임준형, 황진성, 강인하 넷에 의해서 개발되었으며, 지도교수님은 이창열 교수님께서 담당하셨다.

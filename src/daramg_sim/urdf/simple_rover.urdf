@@ -13,8 +13,6 @@
     <xacro:include filename="$(find daramg_sim)/urdf/sensorModule.xacro"/>
     <!--Add macros for Front Oriented RGB-D Camera-->
     <xacro:include filename="$(find daramg_sim)/urdf/forwardCam.xacro"/>
-    <!--Add Robotic Arm for Simultation-->
-    <xacro:include filename="$(find daramg_sim)/urdf/robotarm.xacro"/>
 
     <!-- 기준 프레임 -->
     <link name="base_footprint"/>
@@ -57,11 +55,6 @@
                             scan_topic="mast_scan"
                             imu_topic="mast_imu"/>
 
-    <xacro:robotarm parent="chassis"
-                        prefix="arm_"
-                        xyz="0.25 0.15 0.475"
-                        rpy="0 0 0"
-                        add_ros2_control="true"/>
 
 
     <joint name="front_left_column_joint" type="fixed">

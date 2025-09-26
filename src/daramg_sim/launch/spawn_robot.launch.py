@@ -30,12 +30,12 @@ def generate_launch_description():
     """
 
     world_arg = DeclareLaunchArgument(
-        'world', default_value='warehouse_old.sdf',
+        'world', default_value='map.sdf',
         description='Name of the Gazebo world file to load'
     )
 
     model_arg = DeclareLaunchArgument(
-        'model', default_value='simple_rover.urdf',
+        'model', default_value='ramgbot.urdf',
         description='Name of the URDF description to load'
     )
 
