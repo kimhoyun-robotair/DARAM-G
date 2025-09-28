@@ -117,14 +117,6 @@ def generate_launch_description():
             "/camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
             "/camera/depth_image@sensor_msgs/msg/Image@gz.msgs.Image",
             "/camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked",
-            # Sensor Module in Mast Topic
-            "/mast_imu@sensor_msgs/msg/Imu@gz.msgs.IMU",
-            "/mast_scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan",
-            #"/mast_scan/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked",
-            "/mast_camera/image@sensor_msgs/msg/Image@gz.msgs.Image",
-            "/mast_camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",            
-            "/mast_camera/depth_image@sensor_msgs/msg/Image@gz.msgs.Image",
-            "/mast_camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked",
         ],
         output="screen",
         parameters=[
