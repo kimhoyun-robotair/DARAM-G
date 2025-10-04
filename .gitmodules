@@ -1,0 +1,3 @@
+[submodule "src/mogi_trajectory_server"]
+	path = src/mogi_trajectory_server
+	url = https://github.com/MOGI-ROS/mogi_trajectory_server.git
