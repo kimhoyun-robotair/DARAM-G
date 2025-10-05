@@ -30,6 +30,7 @@ setup(
         'console_scripts': [
             'line_follower = daramg_sw.line_follower:main',
             'color_detector = daramg_sw.color_detection:main',
+            'yolo_node = daramg_sw.yolo_node:main',
         ],
     },
 )

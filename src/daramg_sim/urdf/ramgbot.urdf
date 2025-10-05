@@ -35,7 +35,7 @@
     </link>
 
     <xacro:mount_rgbd_front parent="chassis"
-                            prefix="front_rgbd"
+                            prefix="bbox_front"
                             x="0.11" y="0.0" z="0.12"
                             pitch_deg="20"
                             width="1080" height="720"
