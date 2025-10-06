@@ -80,22 +80,17 @@
     <include>
       <uri>file:///home/kimhoyun/DARAM-G/src/daramg_sim/model/coke_can</uri>
       <name>coke_can</name>
-      <pose>0.87894128570477026 -0.38618368633859146 0 0 0 0</pose>
+      <pose>-0.23319832052943879 0.40840729748015137 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/.gz/fuel/fuel.gazebosim.org/openrobotics/models/malevisitoronphone/2</uri>
-      <name>MaleVisitorOnPhone</name>
-      <pose>1.8696944673289639 -0.0056511050165520878 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/DARAM-G/src/daramg_sim/model/coke_can</uri>
+      <name>coke_can_0</name>
+      <pose>0.45577404071482652 -0.4209335260880856 0 0 0 0</pose>
     </include>
     <include>
-      <uri>file:///home/kimhoyun/.gz/fuel/fuel.gazebosim.org/openrobotics/models/malevisitoronphone/2</uri>
-      <name>MaleVisitorOnPhone_0</name>
-      <pose>1.4500393814215915 0.96136338306876534 0 0 0 0</pose>
-    </include>
-    <include>
-      <uri>file:///home/kimhoyun/.gz/fuel/fuel.gazebosim.org/openrobotics/models/femalevisitor/2</uri>
-      <name>FemaleVisitor</name>
-      <pose>0.20169991869950898 -1.0835625008731911 0 0 0 0</pose>
+      <uri>file:///home/kimhoyun/DARAM-G/src/daramg_sim/model/coke_can</uri>
+      <name>coke_can_1</name>
+      <pose>0.96761003790769706 0.41903016611296029 0 0 0 0</pose>
     </include>
     <light name='sun' type='directional'>
       <pose>0 0 10 0 0 0</pose>
