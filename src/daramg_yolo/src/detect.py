@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Non-ROS Library
-import os, numpy as np
+import os, threading, numpy as np
 from ultralytics import YOLO
 import cv2, torch
 
@@ -55,6 +55,9 @@ class YoloDetection(Node):
         # cv2 <-> ROS2
         self.cv_bridge = CvBridge()
 
+        # 멀티 스레딩 사용시 shared variable에 대한 lock
+        self.depth_lock = threading.Lock()
+
         # ROS2 Publisher, Subscriber
         # 압축된 이미지를 사용할지, 아니면 raw 이미지를 사용할지 결정해서 조건문으로 분기
         if self.use_image_raw_or_compressed == "image_raw":
@@ -69,23 +72,11 @@ class YoloDetection(Node):
 
         # 가장 최근에 사용할 depth 이미지
         self.latest_depth = None
+
         self.get_logger().info("Yolo Detection Configuration Completed")
-    
-    def depth_cb(self, msg:Image):
-        try:
-            self.latest_depth = self.cv_bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
-        except Exception as e:
-            self.get_logger().error(f"cv_bridge conversion failed: {e}")
-            return
 
-    def image_cb(self, msg):
-        # cv_bridge를 활용해서 ROS2의 image 토픽에서 opencv의 이미지 데이터로 변환
-        try:
-            frame = self.cv_bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-        except Exception as e:
-            self.get_logger().error(f"cv_bridge conversion failed: {e}")
-            return
-
+    def process_image(self, frame, header):
+        # 이미지 처리 함수
         try:
             yolo_results = self.yolo_model.predict(source=frame, conf=self.confidence, verbose=False) # yolo 모델을 통한 객체 인식 진행
         except Exception as e:
@@ -94,10 +85,14 @@ class YoloDetection(Node):
         
         # YOLO 탐지 결과를 저장하고 publish 하기 위한 bbox 집합 인터페이스(메시지)를 지정
         bboxes = BoundingBoxes()
-        bboxes.header = msg.header
-        bboxes.image_header = msg.header
+        bboxes.header = header
+        bboxes.image_header = header
 
         copy_image = frame.copy() # yolo 탐지 결과를 표시하기 위해서 영상 이미지를 복사함
+
+        with self.depth_lock:
+            # depth_lock을 획득한 상태에서만 latest_depth에 접근 가능하도록 스레드 처리
+            depth_copy = None if self.latest_depth is None else self.latest_depth.copy()
 
         for r in yolo_results:
             boxes = getattr(r, 'boxes', None) # yolo 탐지 결과 안에 box 속성이 있는지 확인
@@ -119,9 +114,10 @@ class YoloDetection(Node):
                     cy = int((y1+y2)/2.0)
 
                     # depth 계산
-                    if self.latest_depth is not None:
-                        if 0 <= cx < self.latest_depth.shape[1] and 0 <= cy < self.latest_depth.shape[0]:
-                            depth_value = self.latest_depth[cy, cx]
+                    depth_value = -1.0 # 초기화를 통해서 런타임 오류 발생 방지
+                    if depth_copy is not None:
+                        if 0 <= cx < depth_copy.shape[1] and 0 <= cy < depth_copy.shape[0]:
+                            depth_value = depth_copy[cy, cx]
                             if np.isnan(depth_value) or np.isinf(depth_value):
                                 depth_value = -1.0
                         else:
@@ -170,95 +166,53 @@ class YoloDetection(Node):
         try:
             compressed_msg = self.cv_bridge.cv2_to_compressed_imgmsg(copy_image, dst_format='jpg')
             # compressed_msg = self.cv_bridge.cv2_to_imgmsg(copy_image, encoding='bgr8')
-            compressed_msg.header = msg.header
+            compressed_msg.header = header
             self.yoloimage_publisher.publish(compressed_msg)
         except Exception as e:
             self.get_logger().error(f"Compressed publish failed: {e}")
         
         self.boundingboxes_publisher.publish(bboxes)
 
-    def compimage_cb(self, msg):
-        # cv_bridge를 활용해서 ROS2의 compressed image 토픽에서 opencv의 이미지 데이터로 변환
+    def estimate_depth(self, bbox):
+        # bbox 영역의 depth 값을 중앙값으로 계산해서 더 정확한 depth 값 산출
+        if self.latest_depth is None:
+            return None
+        x1, y1, x2, y2 = map(int, [bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax])
+        roi = self.latest_depth[y1:y2, x1:x2]
+        valid_depth = roi[np.isfinite(roi)] & (roi > 0)
+        if valid_depth.size == 0:
+            return None
+        return float(np.median(valid_depth))
+    
+    def depth_cb(self, msg:Image):
+        # depth 이미지 콜백
         try:
-            frame = self.cv_bridge.compressed_imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            depth_image = self.cv_bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+            with self.depth_lock:
+                self.latest_depth = depth_image # lock 내부에서 depth 이미지 업데이트
         except Exception as e:
             self.get_logger().error(f"cv_bridge conversion failed: {e}")
             return
 
+    def image_cb(self, msg):
+        # raw image 콜백
+        # cv_bridge를 활용해서 ROS2의 image 토픽에서 opencv의 이미지 데이터로 변환
         try:
-            yolo_results = self.yolo_model.predict(source=frame, conf=self.confidence, verbose=False) # yolo 모델을 통한 객체 인식 진행
+            frame = self.cv_bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            self.process_image(frame, msg.header)
         except Exception as e:
-            self.get_logger().error(f"YOLO Inference Failed:{e}")
+            self.get_logger().error(f"cv_bridge conversion failed: {e}")
             return
-        
-        # YOLO 탐지 결과를 저장하고 publish 하기 위한 bbox 집합 인터페이스(메시지)를 지정
-        bboxes = BoundingBoxes()
-        bboxes.header = msg.header
-        bboxes.image_header = msg.header
 
-        copy_image = frame.copy() # yolo 탐지 결과를 표시하기 위해서 영상 이미지를 복사함
-
-        for r in yolo_results:
-            boxes = getattr(r, 'boxes', None) # yolo 탐지 결과 안에 box 속성이 있는지 확인
-                                              # getattr(object, attribute, default) -> object에 attribute(속성)이 있는지 확인 -> default는 없을 경우 결과로 raise하는 값
-                                              # 이 코드는 result 안에 box가 있으면 그대로 진행하고, 없으면 None을 띄우도록 작성
-            if boxes is None or len(boxes) == 0: # boxes가 값이 None이라면 그냥 빠르게 pass
-                continue
-
-            for b in boxes: # boxes 안에 들어있는 box들에 대해서
-                try:
-                    x1, y1, x2, y2 = b.xyxy[0].to('cpu').detach().numpy().tolist()
-                    # YOLO 탐지 결과로 나오는 xyxy[0] GPU 텐서를 CPU 메모리에 복사하고, numpy -> list로 차례대로 변환
-                    # GPU 상 YOLO 탐지 결과를 파이썬 리스트로 변환
-                    
-                    x1, y1, x2, y2 = map(int, [x1, y1, x2, y2]) # 정수 변환
-
-                    # BBox의 중심점 계산
-                    cx = int((x1+x2)/2.0)
-                    cy = int((y1+y2)/2.0)
-                    
-                    # yolo가 탐지한 객체에 대한 class id, class name 그리고 확률을 지정
-                    class_id = int(b.cls.item()) if hasattr(b.cls, 'item') else int(b.cls)
-                    class_name = self.yolo_model.names[class_id] if hasattr(self.yolo_model, 'names') else str(class_id)
-                    score = float(b.conf.item()) if hasattr(b, 'conf') else 0.0
-                    # hasattr 함수는 지정된 객체가 그 속성을 가지고 있는지 판독하는 파이썬 내장함수
-
-                    bbox = BoundingBox()
-                    bbox.yoloclass = class_name
-                    bbox.probability = score
-                    bbox.xmin = x1
-                    bbox.ymin = y1
-                    bbox.xmax = x2
-                    bbox.ymax = y2
-                    bbox.center_x = cx
-                    bbox.center_y = cy
-
-                    bboxes.bounding_boxes.append(bbox)
-
-                    # 구한 좌표를 기반으로 bbox 그리기
-                    cv2.rectangle(copy_image,
-                                  (x1, y1), (x2, y2),
-                                  (0, 255, 0), 2)
-                    # 탐지된 객체 중심 표시
-                    cv2.circle(copy_image, (cx, cy), 2, (0, 255, 0), -1)
-                    # 객체 이름과 신뢰도(확률) 표시
-                    label = f"{class_name}: {score:.2f}"
-                    cv2.putText(copy_image, label, (x1, max(0, y1-5)), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 230, 255), 1, cv2.LINE_AA)
-                    
-                except Exception as e:
-                    self.get_logger().error(f"Error processing bounding box: {e}")
-                    continue
-
+    def compimage_cb(self, msg):
+        # 압축된 이미지 콜백
+        # cv_bridge를 활용해서 ROS2의 compressed image 토픽에서 opencv의 이미지 데이터로 변환
         try:
-            compressed_msg = self.cv_bridge.cv2_to_compressed_imgmsg(copy_image, dst_format='jpg')
-            # compressed_msg = self.cv_bridge.cv2_to_imgmsg(copy_image, encoding='bgr8')
-            compressed_msg.header = msg.header
-            self.yoloimage_publisher.publish(compressed_msg)
+            frame = self.cv_bridge.compressed_imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            self.process_image(frame, msg.header)
         except Exception as e:
-            self.get_logger().error(f"Compressed publish failed: {e}")
-        
-        self.boundingboxes_publisher.publish(bboxes)
+            self.get_logger().error(f"cv_bridge conversion failed: {e}")
+            return
 
 def main(args=None):
     rclpy.init(args=args)

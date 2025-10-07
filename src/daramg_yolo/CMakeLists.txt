@@ -19,6 +19,8 @@ ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
   src/detect.py
+  src/object_collector.py
+  src/color_detect.py
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
