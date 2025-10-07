@@ -18,7 +18,7 @@ class ObjectCollector(Node):
         # 파라미터 선언
         self.declare_parameter('image_width', 1080)
         self.declare_parameter('image_height', 720)
-        self.declare_parameter('depth_stop_threshold', 0.3) # 로봇이 멈추는 거리
+        self.declare_parameter('depth_stop_threshold', 0.1) # 로봇이 멈추는 거리
         self.declare_parameter('fov_deg', 60.0) # 카메라의 시야각도
         self.declare_parameter('Kp_ang', 0.002) # 각속도 제어 이득
         self.declare_parameter('Kp_lin', 0.5) # 선형 속도 제어 이득
@@ -38,21 +38,38 @@ class ObjectCollector(Node):
         self.target_detected = False # 객체가 탐지되었는지 여부
         self.prev_error_x = 0.0 # 이전 위치 오차 값
         self.cmd_vel = Twist() # 속도 토픽
+        self.latest_detection_time = None # 미탐지 시간 계산을 위한 변수 선언
 
-        self.tiemr = self.create_timer(0.05, self.contorll_loop) # 타이머 선언으로 제어 루프 시작하기
+        self.timer = self.create_timer(0.2, self.controll_loop) # 타이머 선언으로 제어 루프 시작하기
 
         self.get_logger().info("Object Collector Node Configured!")
     
     def bbox_callback(self, msg:BoundingBoxes):
         if not msg.bounding_boxes:
-            self.get_logger().info("No Object Detected")
+            self.get_logger().warn("No Object Detected")
             self.stop_robot()
             self.target_detected = False
             return
         
+        # 가장 최근에 탐지된 시간 기록
+        self.latest_detection_time = self.get_clock().now()
+        self.target_detected = True
+
+        # 실제 하드웨어에서 사용할 코드에서는 사용해보기
+        #valid_boxes = [b for b in msg.bounding_boxes if b.yoloclass in ['bottle', 'cup']]
+        #if not valid_boxes:
+        #    self.stop_robot()
+        #    return
+        #nearest_bbox = min(valid_boxes, key=lambda b: b.depth if b.depth > 0 else float('inf'))
+
         # 가장 가까운 객체를 선택하기
         nearest_bbox = min(msg.bounding_boxes, key=lambda b: b.depth if b.depth > 0 else float('inf'))
         target_depth = nearest_bbox.depth
+
+        # depth값이 비정상적 수치를 기록할 경우 무시
+        if target_depth <=0 or np.isnan(target_depth) or np.isinf(target_depth):
+            self.get_logger().warn("Invalid Depth Value Deteced.")
+            return
 
         # 가장 가까운 객체까지의 오프셋 계산 -> 각도 및 선속도 제어를 위한 값 산출
         cx = nearest_bbox.center_x
@@ -62,10 +79,14 @@ class ObjectCollector(Node):
         lin_x = self.Kp_lin * target_depth if target_depth > 0 else 0.0
 
         # 임계 거리 이하로 접근하게 될 경우 로봇의 이동 중지
+        # margin을 추가해서 좀 더 안정적인 제어
+        self.stop_margin = 0.05
         if 0 < target_depth < self.depth_stop_threshold:
             self.get_logger().info(f"Target within stopping distance: {target_depth:.2f}m, Stop!")
             self.stop_robot()
             return
+        elif target_depth <= self.depth_stop_threshold + self.stop_margin:
+            lin_x *= 0.5
         
         # 속도 제한 걸기
         ang_z = max(-0.5, min(0.5, ang_z))
@@ -75,16 +96,28 @@ class ObjectCollector(Node):
         self.cmd_vel.linear.x = lin_x
         self.cmd_vel.angular.z = ang_z
 
-        self.get_logger().info(f"Target Depth: {target_depth:.2f}m, Lin_x: {lin_x:.2f}, Ang_z: {ang_z:.2f}")
+        self.get_logger().debug(f"Target Depth: {target_depth:.2f}m, Lin_x: {lin_x:.2f}, Ang_z: {ang_z:.2f}")
 
     def stop_robot(self):
-        # 로봇을 멈추기 위해서 작성한 함수
         stop_cmd = Twist()
         stop_cmd.linear.x = 0.0
         stop_cmd.angular.z = 0.0
+        self.cmd_vel = stop_cmd
         self.cmd_pub.publish(stop_cmd)
-    
+
     def controll_loop(self):
+        # latest_detection_time이 아직 초기화되지 않은 경우 예외 처리
+        if self.latest_detection_time is None:
+            self.stop_robot()
+            return
+
+        if (self.get_clock().now() - self.latest_detection_time).nanoseconds > 2e9:
+            self.get_logger().warn("No recent detection, stopping robot.")
+            self.stop_robot()
+            self.cmd_vel = Twist()
+            self.target_detected = False
+            return
+
         self.cmd_pub.publish(self.cmd_vel)
 
 def main(args=None):
@@ -99,4 +132,3 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()
-        

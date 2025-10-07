@@ -88,7 +88,7 @@ class YoloDetection(Node):
         bboxes.header = header
         bboxes.image_header = header
 
-        copy_image = frame.copy() # yolo 탐지 결과를 표시하기 위해서 영상 이미지를 복사함
+        copy_image = frame.copy() # yolo 탐지 결과를 표시하기 위해서 영상 이미지를 복사함 (원본 보호)
 
         with self.depth_lock:
             # depth_lock을 획득한 상태에서만 latest_depth에 접근 가능하도록 스레드 처리
@@ -117,7 +117,8 @@ class YoloDetection(Node):
                     depth_value = -1.0 # 초기화를 통해서 런타임 오류 발생 방지
                     if depth_copy is not None:
                         if 0 <= cx < depth_copy.shape[1] and 0 <= cy < depth_copy.shape[0]:
-                            depth_value = depth_copy[cy, cx]
+                            depth_value = self.estimate_depth(BoundingBox(xmin=x1, ymin=y1, xmax=x2, ymax=y2,
+                                                                         center_x=cx, center_y=cy)) # bbox에 대한 depth 값 산출
                             if np.isnan(depth_value) or np.isinf(depth_value):
                                 depth_value = -1.0
                         else:
@@ -174,15 +175,31 @@ class YoloDetection(Node):
         self.boundingboxes_publisher.publish(bboxes)
 
     def estimate_depth(self, bbox):
-        # bbox 영역의 depth 값을 중앙값으로 계산해서 더 정확한 depth 값 산출
+        # 전체 BBOX 영역에서 중앙값을 사용해서 depth를 추정하기
         if self.latest_depth is None:
             return None
-        x1, y1, x2, y2 = map(int, [bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax])
-        roi = self.latest_depth[y1:y2, x1:x2]
-        valid_depth = roi[np.isfinite(roi)] & (roi > 0)
-        if valid_depth.size == 0:
+        try:
+            x1, y1, x2, y2 = map(int, [bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax]) # 정수로 변환
+            # ROI 영역 조정하기
+            w = x2 - x1
+            h = y2 - y1
+            x1 += int(w*0.3)
+            x2 -= int(w*0.3)
+            y1 += int(h*0.3) 
+            y2 -= int(h*0.3)
+            # 스레드 shared variable에 대한 lock 획득
+            with self.depth_lock:
+                depth_copy = self.latest_depth.copy()
+            roi = depth_copy[max(0, y1):min(y2, depth_copy.shape[0]),
+                            max(0, x1):min(x2, depth_copy.shape[1])]
+            # ROI 영역에서 depth 값 추출
+            valid_depth = roi[np.isfinite(roi) & (roi > 0)]
+            if valid_depth.size == 0:
+                return None
+            return float(np.median(valid_depth))
+        except Exception as e:
+            self.get_logger().warn(f"Depth estimation failed: {e}")
             return None
-        return float(np.median(valid_depth))
     
     def depth_cb(self, msg:Image):
         # depth 이미지 콜백
