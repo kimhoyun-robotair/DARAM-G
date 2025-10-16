@@ -15,16 +15,15 @@ class ColorDetector(Node):
         super().__init__('color_detector')
 
         # 파라미터 선언
-        self.declare_parameter('image_topic_name', "/camera/image") # camera 토픽 이름
+        self.declare_parameter('image_topic_name', "/camera/camera/color/image_raw") # camera 토픽 이름
         self.declare_parameter('compressed_image_topic_name', '/camera/compressedImage') # 압축된 이미지 토픽 이름
-        self.declare_parameter('depth_image_topic_name', '/camera/depth_image') # depth 이미지 토픽 이름
+        self.declare_parameter('depth_image_topic_name', '/camera/camera/aligned_depth_to_color/image_raw') # depth 이미지 토픽 이름
         self.declare_parameter('use_image_raw_or_compressed', 'image_raw') # 압축 이미지를 쓸건지 raw 이미지를 쓸건지 정하는 파라미터 (image_raw or compressed)
 
         # 파라미터 값 읽어오기
         self.image_topic_name = self.get_parameter('image_topic_name').get_parameter_value().string_value
         self.compressed_image_topic_name = self.get_parameter('compressed_image_topic_name').get_parameter_value().string_value
         self.depth_image_topic_name = self.get_parameter('depth_image_topic_name').get_parameter_value().string_value
-
         self.use_image_raw_or_compressed = self.get_parameter('use_image_raw_or_compressed').get_parameter_value().string_value
 
         # cv2 <-> ROS2

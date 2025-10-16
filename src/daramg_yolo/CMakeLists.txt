@@ -14,6 +14,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(detection_msgs REQUIRED)
+find_package(yolo_msgs REQUIRED)
 
 ament_python_install_package(${PROJECT_NAME})
 
