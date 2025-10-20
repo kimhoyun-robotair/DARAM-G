@@ -9,16 +9,9 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
-find_package(nav_msgs REQUIRED)
-find_package(sensor_msgs REQURIED)
-find_package(visualization_msgs REQUIRED)
-
-ament_python_install_package(${PROJECT_NAME})
-
-install(PROGRAMS
-  src/wfd_utils.py
-  src/frontier_detection.py
-  DESTINATION lib/${PROJECT_NAME})
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
