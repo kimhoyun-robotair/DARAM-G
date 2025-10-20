@@ -1,6 +1,0 @@
-[submodule "src/m-explore-ros2"]
-	path = src/m-explore-ros2
-	url = https://github.com/kimhoyun-robotair/m-explore-ros2.git
-[submodule "src/turtlebot_exploration_3d"]
-	path = src/turtlebot_exploration_3d
-	url = https://github.com/kimhoyun-robotair/turtlebot_exploration_3d.git
