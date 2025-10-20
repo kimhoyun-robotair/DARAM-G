@@ -35,7 +35,7 @@ def generate_launch_description():
     )
 
     model_arg = DeclareLaunchArgument(
-        'model', default_value='ramgbot.urdf',
+        'model', default_value='simple_rover.urdf',
         description='Name of the URDF description to load'
     )
 
@@ -50,7 +50,7 @@ def generate_launch_description():
     )
 
     yaw_arg = DeclareLaunchArgument(
-        'yaw', default_value='0.0',
+        'yaw', default_value='-1.5707',
         description='yaw angle of spawned robot'
     )
 
@@ -112,11 +112,14 @@ def generate_launch_description():
             "/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry",
             "/joint_states@sensor_msgs/msg/JointState@gz.msgs.Model",
             "/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V",
-            # Forwar Camera Topic
-            "/camera/image@sensor_msgs/msg/Image@gz.msgs.Image",
-            "/camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
-            "/camera/depth_image@sensor_msgs/msg/Image@gz.msgs.Image",
-            "/camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked",
+            # Sensor Module in Mast Topic
+            "/mast_imu@sensor_msgs/msg/Imu@gz.msgs.IMU",
+            "/mast_scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan",
+            #"/mast_scan/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked",
+            "/mast_camera/image@sensor_msgs/msg/Image@gz.msgs.Image",
+            "/mast_camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",            
+            "/mast_camera/depth_image@sensor_msgs/msg/Image@gz.msgs.Image",
+            "/mast_camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked",
         ],
         output="screen",
         parameters=[

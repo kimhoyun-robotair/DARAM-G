@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="simple_rover">
+
+    <!--Add macros for inertial calculation-->
+    <xacro:include filename="$(find daramg_sim)/urdf/inertial_macros.xacro"/>
+    <!--Add macros for color implementation-->
+    <xacro:include filename="$(find daramg_sim)/urdf/materials.xacro"/>
+    <!--Add macros for physical charateristic of wheels and chassis-->
+    <xacro:include filename="$(find daramg_sim)/urdf/simple_rover.gazebo"/>
+    <!--Add macros for diff drive plugin-->
+    <xacro:include filename="$(find daramg_sim)/urdf/diff_drive.gazebo"/>
+    <!--Add macros for RGB-D camera and 2D LiDAR-->
+    <xacro:include filename="$(find daramg_sim)/urdf/sensorModule.xacro"/>
+
+    <!-- 기준 프레임 -->
+    <link name="base_footprint"/>
+
+    <!-- base_footprint -> chassis (고정) -->
+    <joint name="chassis_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <parent link="base_footprint"/>
+        <child link="chassis"/>
+    </joint>
+
+    <link name="chassis">
+        <visual>
+            <origin xyz="0 0 0.40" rpy="0 0 0"/>
+            <geometry><box size="0.6 0.4 0.2"/></geometry>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0.40" rpy="0 0 0"/>
+            <geometry><box size="0.6 0.4 0.2"/></geometry>
+        </collision>
+        <xacro:inertial_box mass="7.0" x="0.6" y="0.4" z="0.2">
+            <origin xyz="0 0 0.40" rpy="0 0 0"/>
+        </xacro:inertial_box>
+    </link>
+
+    <!-- 마스트 (카메라/라이다/IMU) -->
+    <xacro:mount_mast_sensors parent="chassis"
+                              prefix="mast"
+                              x="0.0" y="0.0" z="0.525"
+                              cam_topic="mast_camera"
+                              scan_topic="mast_scan"
+                              imu_topic="mast_imu"/>
+
+    <!-- Front Left Wheel -->
+    <joint name="front_left_wheel_joint" type="continuous">
+        <origin xyz="0.25 0.20 0.20" rpy="0 0 0"/>
+        <parent link="chassis"/>
+        <child link="front_left_wheel"/>
+        <axis xyz="0 1 0"/>
+        <limit effort="100.0" velocity="10.0"/>
+        <dynamics damping="1.0" friction="1.0"/>
+    </joint>
+
+    <link name="front_left_wheel">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
+            <geometry><cylinder radius="0.1" length="0.1"/></geometry>
+            <material name="green"/>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
+            <geometry><cylinder radius="0.1" length="0.1"/></geometry>
+        </collision>
+        <xacro:inertial_cylinder mass="0.1" length="0.1" radius="0.1">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </xacro:inertial_cylinder>
+    </link>
+
+    <!-- Front Right Wheel -->
+    <joint name="front_right_wheel_joint" type="continuous">
+        <origin xyz="0.25 -0.20 0.20" rpy="0 0 0"/>
+        <parent link="chassis"/>
+        <child link="front_right_wheel"/>
+        <axis xyz="0 1 0"/>
+        <limit effort="100.0" velocity="10.0"/>
+        <dynamics damping="1.0" friction="1.0"/>
+    </joint>
+
+    <link name="front_right_wheel">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
+            <geometry><cylinder radius="0.1" length="0.1"/></geometry>
+            <material name="green"/>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
+            <geometry><cylinder radius="0.1" length="0.1"/></geometry>
+        </collision>
+        <xacro:inertial_cylinder mass="0.1" length="0.1" radius="0.1">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </xacro:inertial_cylinder>
+    </link>
+
+    <!-- Rear Left Wheel -->
+    <joint name="rear_left_wheel_joint" type="continuous">
+        <origin xyz="-0.25 0.20 0.20" rpy="0 0 0"/>
+        <parent link="chassis"/>
+        <child link="rear_left_wheel"/>
+        <axis xyz="0 1 0"/>
+        <limit effort="100.0" velocity="10.0"/>
+        <dynamics damping="1.0" friction="1.0"/>
+    </joint>
+
+    <link name="rear_left_wheel">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
+            <geometry><cylinder radius="0.1" length="0.1"/></geometry>
+            <material name="green"/>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
+            <geometry><cylinder radius="0.1" length="0.1"/></geometry>
+        </collision>
+        <xacro:inertial_cylinder mass="0.1" length="0.1" radius="0.1">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </xacro:inertial_cylinder>
+    </link>
+
+    <!-- Rear Right Wheel -->
+    <joint name="rear_right_wheel_joint" type="continuous">
+        <origin xyz="-0.25 -0.20 0.20" rpy="0 0 0"/>
+        <parent link="chassis"/>
+        <child link="rear_right_wheel"/>
+        <axis xyz="0 1 0"/>
+        <limit effort="100.0" velocity="10.0"/>
+        <dynamics damping="1.0" friction="1.0"/>
+    </joint>
+
+    <link name="rear_right_wheel">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
+            <geometry><cylinder radius="0.1" length="0.1"/></geometry>
+            <material name="green"/>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 1.5707 1.5707"/>
+            <geometry><cylinder radius="0.1" length="0.1"/></geometry>
+        </collision>
+        <xacro:inertial_cylinder mass="0.1" length="0.1" radius="0.1">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </xacro:inertial_cylinder>
+    </link>
+
+</robot>
