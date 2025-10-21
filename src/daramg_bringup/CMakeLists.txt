@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(daramg_yolo)
+project(daramg_bringup)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -8,20 +8,21 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(rclpy REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
-find_package(detection_msgs REQUIRED)
-find_package(yolo_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+
+install(DIRECTORY config launch weights
+  DESTINATION share/${PROJECT_NAME})
 
 ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
-  src/object_collector.py
-  src/color_detect.py
-  src/line_follower.py
+  src/main.py
+  src/utility.py
+  src/color_detection.py
+  src/line_detection.py
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
