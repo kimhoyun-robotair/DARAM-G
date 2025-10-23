@@ -19,10 +19,13 @@ install(DIRECTORY config launch weights
 ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
-  src/main.py
-  src/utility.py
   src/color_detection.py
+  src/yolo_test.py
+  src/line_test.py
+  src/color_test.py
+  src/utility.py
   src/line_detection.py
+  src/main.py
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

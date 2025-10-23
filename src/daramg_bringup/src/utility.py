@@ -1,9 +1,10 @@
-import cv2
 from math import isfinite
 import numpy as np
 from dataclasses import dataclass
 from typing import Optional, Tuple, List, Iterable, Dict
-import sys
+import sys, math
+from yolo_msgs.msg import DetectionArray
+from detection_msgs.msg import LineDetection
 
 """"""""""""""""""" P and PD Controller Utilities """""""""""""""""""""""""
 def clamp(x: float, lo: float, hi: float) -> float:
@@ -38,13 +39,15 @@ class YoloConfig:
 
 @dataclass
 class DetectionLite:
-    depth : float # 카메라와 물체 사이 거리 (m)
-    cx : float # 이미지의 x 좌표
+    detections : DetectionArray
 
-def compute_cmd_vel_from_YOLO(detections: Iterable[DetectionLite], 
-                              config: YoloConfig) -> Tuple[float, float, Dict[str, float]]:
+def compute_cmd_vel_from_YOLO(detections : DetectionArray, 
+                              config : YoloConfig) -> Tuple[float, float, Dict[str, float]]:
     """ 객체 탐지 결과를 바탕으로 선속도 및 각속도 계산 """
-    dets : List[DetectionLite] = [det for det in detections if det.depth is not None]
+    if hasattr(detections, "detections"):
+        detections = detections.detections
+
+    dets = [det for det in detections if det.depth is not None]
     info = {"reason": "",
             "selected_depth": None,
             "angle_error_deg": None}
@@ -60,7 +63,7 @@ def compute_cmd_vel_from_YOLO(detections: Iterable[DetectionLite],
     # 가장 가까운 물체 선택
     target = min(valid, key=lambda d: d.depth)
     depth = float(target.depth)
-    cx = float(target.cx)
+    cx = float(target.bbox.center.position.x)
 
     # 이미지 중심 대비 픽셀 오프셋 및 각도 오차 산출
     offset_x = cx - (config.image_width / 2.0)
@@ -87,48 +90,75 @@ def compute_cmd_vel_from_YOLO(detections: Iterable[DetectionLite],
     
 """"""""""""""""""""""""" Line Detection Based Object Approaching Utilites """""""""""""""""""""""""
 @dataclass
-class LineConfig:
-    deadband_px : int = 20 # 허용 가능한 오차
-    v_turn : float = 0.05 # 회전하며 직진할 때 사용하는 조향용 선속도, m/s
-    v_straight : float = 0.1 # 전진할 때 사용하는 선속도, m/s
-    w_turn : float = 0.15 # 각속도, rad/s
-    lin_max : float = 0.3 # 선속도 최대 제한
-    ang_max : float = 0.5 # 각속도 최대 제한
-
 @dataclass
-class LineObservation:
-    cx : float
-    width : int 
-    found : bool = True # 라인 검출 여부
+class LineConfig:
+    # 기존 필드 유지
+    deadband_px : int = 20
+    v_turn : float = 0.05
+    v_straight : float = 0.10
+    w_turn : float = 0.15      # (하위호환용) 안 씀. 남겨둠.
+    lin_max : float = 0.30
+    ang_max : float = 0.50
+    # 추가 파라미터
+    k_p : float = 1.6          # 비례 게인 (정규화 오차에 곱)
+    v_min : float = 0.02       # 너무 많이 감쇠되어 정지하지 않도록 하한
+    speed_decay : float = 0.85 # |e|에 따른 속도 감쇠 세기(0.5~1.5 권장)
+    soft_db_ratio : float = 0.35  # 소프트 데드밴드 강도(0=하드, 1=매우 부드럽게)
 
-def compute_cmd_vel_from_line(obs: Optional[LineObservation],
-                              config : LineConfig) -> Tuple[float, float, Dict[str, float]]:
-    """ 라인 탐지 결과를 바탕으로 이를 추종하기 위한 선속도 및 각속도 계산 및 반환 """
-    info: Dict[str, float] = {"mode": "stop", "error_px": None}
+def compute_cmd_vel_from_line(obs, config: LineConfig) -> Tuple[float, float, Dict[str, float]]:
+    """ 라인 탐지 결과를 바탕으로 선속도/각속도 산출 (stateless, 연속형 P, 소프트 데드밴드, 속도 감쇠) """
+    info: Dict[str, float] = {"mode": "stop", "error_px": None, "error_norm": None}
 
     if obs is None or not obs.found:
         return 0.0, 0.0, info
-    
-    cx = float(obs.cs)
+
+    cx = float(obs.cx)
     width = int(obs.width)
     center = width / 2.0
 
-    error_px = center - cx # 왼쪽이면 +, 오른쪽이면 -
-    info["error_px"] = error_px
+    # 1) 픽셀 오차 및 정규화 (좌 +, 우 -)
+    error_px = center - cx
+    error_norm = error_px / (0.5 * width + 1e-6)   # [-1, 1] 정도 범위
+    error_norm = clamp(error_norm, -1.0, 1.0)
+    info["error_px"] = float(error_px)
+    info["error_norm"] = float(error_norm)
 
-    if abs(error_px) > config.deadband_px:
-        # Turn
-        lin_x = config.v_turn
-        ang_z = (config.w_turn if error_px > 0 else -config.w_turn)
-        info["mode"] = "turn_left" if error_px > 0 else "turn_right"
+    # 2) 소프트 데드밴드: 작은 오차일수록 더 눌러서 0 근처 유지
+    #    hard 데드밴드 대신, 연속적으로 감쇠하는 방식(계단/진동 완화)
+    #    예: db_strength=0.35 => 작은 오차일수록 더 완만
+    db = max(config.deadband_px / (0.5 * width + 1e-6), 0.0)  # 픽셀 데드밴드를 정규화해 반영
+    db = clamp(db, 0.0, 0.5)  # 과도한 데드밴드 방지
+    # 소프트닝: 선형-쵸핑 대신 스무드 스텝
+    def soft_deadband(x: float, db_lin: float, strength: float) -> float:
+        # db_lin: 0~0.5, strength: 0(하드)~1(매우 소프트)
+        ax = abs(x)
+        if ax <= db_lin:
+            # 안쪽에서는 천천히 0으로 끌어감
+            s = (ax / (db_lin + 1e-6))  # 0~1
+            scaled = s**(1.0 + 4.0*strength)  # 곡률 조절
+            return math.copysign(db_lin * scaled, x)  # 완만하게 증가
+        else:
+            # 바깥에서는 원래 값으로
+            return x
+
+    e_soft = soft_deadband(error_norm, db, config.soft_db_ratio)
+
+    # 3) 각속도: 연속형 P
+    ang_z_raw = config.k_p * e_soft
+    # 하드 클램프
+    ang_z = clamp(ang_z_raw, -config.ang_max, config.ang_max)
+
+    # 4) 선속도: 오차가 클수록 자동 감쇠 (턴 시 과속 방지)
+    #    v = v_straight / (1 + speed_decay*|e|)
+    v_raw = config.v_straight / (1.0 + config.speed_decay * abs(e_soft))
+    # 턴 중 최소 전진 속도 보장
+    v_raw = max(v_raw, config.v_min if abs(e_soft) > db else config.v_straight)
+    lin_x = clamp(v_raw, 0.0, config.lin_max)
+
+    # 5) 모드 라벨
+    if abs(error_px) <= config.deadband_px:
+        info["mode"] = "Straight(soft)"
     else:
-        # Moving Straight
-        lin_x = config.v_straight
-        ang_z = 0.0
-        info["mode"] = "Straight"
-    
-    # 안전을 위한 상한 필터링
-    lin_x = clamp(lin_x, 0.0, config.lin_max)
-    ang_z = clamp(ang_z, -config.ang_max, config.ang_max)
-    return lin_x, ang_z
-    
+        info["mode"] = "turn_left" if error_px > 0 else "turn_right"
+
+    return float(lin_x), float(ang_z), info

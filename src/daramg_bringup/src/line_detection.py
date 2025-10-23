@@ -1,217 +1,252 @@
 #!/usr/bin/env python3
+import ast
+import math
+from typing import List, Tuple
 
+import cv2
+import numpy as np
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import CompressedImage, Image
+from rclpy.parameter import Parameter
+
 from cv_bridge import CvBridge
-import cv2, threading, numpy as np
+from sensor_msgs.msg import Image
+from geometry_msgs.msg import Point
+from detection_msgs.msg import LineDetection
 
-class ImageSubscriber(Node):
-    def __init__(self):
-        super().__init__('image_subscriber')
-        
-        # subscription for Image
-        self.subscription = self.create_subscription(
-            Image,
-            "/camera/camera/color/image_raw",
-            self.image_callback,
-            1
-        )
 
-        '''
-        # subscription for CompressedImage
-        self.subscription = self.create_subscription(
-            CompressedImage,
-            "/camera/camera/color/image_raw",
-            self.image_callback,
-            1
-        )
-        '''
-        # cv2 <-> ROS bridge
-        self.bridge = CvBridge()
-        # variable to store the latest frame
-        self.latest_frame = None
-        self.frame_lock = threading.Lock()
-
-        # Flag to control the display loop
-        self.running = True
-
-        # start a separate thread for spinning (to ensure image_callback keeps receiving new frames)
-        self.spin_thread = threading.Thread(target=self.spin_thread_func)
-        self.spin_thread.start()
-
-    def spin_thread_func(self):
-        """Separate thread function for rclpy spinning"""
-        while rclpy.ok() and self.running:
-            rclpy.spin_once(self, timeout_sec=0.05)
-
-    def image_callback(self, msg):
-        # msg -> Image
-        # msg -> CompressedImage
-        """Callback Function to receive and store the latest frame"""
-        with self.frame_lock:
-            self.latest_frame = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
-            # self.latest_frame = self.bridge.compressed_imgmsg_to_cv2(msg, desired_encoding='bgr8')
-
-    def display_image(self):
-        # Create a single OpenCV window
-        cv2.namedWindow("frame", cv2.WINDOW_NORMAL)
-        cv2.resizeWindow("frame", 800, 600)
-
-        while rclpy.ok():
-            # Check if there is a new frame available
-            if self.latest_frame is not None:
-                # Process the current image
-                mask, contour, crosshair = self.process_image(self.latest_frame)
-
-                # Add processed images as small images on top of main image
-                result = self.add_small_pictures(self.latest_frame, [mask, contour, crosshair])
-
-                # Show the latest frame
-                cv2.imshow("frame", result)
-                self.latest_frame = None # Clear the frame after displaying
-
-            # Check for quit key
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                self.running = False
-                break
-        # Close OpenCV window after quitting
-        cv2.destroyAllWindows()
-        self.running = False
-
-    def process_image(self, img):
-        rows, cols = img.shape[:2]
-
-        # 1. Convert to HLS color space to extract lightness channel
-        H,L,S = self.convert2hls(img)
-
-        # 2. Invert lightness channel if we follow a dark line on a light background
-        # L = 255 - L # Invert lightness channel
-
-        # 3. apply a polygon mask to filter out simulation's bright sky
-        L_masked, mask = self.apply_polygon_mask(L)
-
-        # 4. For light line on dark background in simulation:
-        lightnessMask = self.threshold_binary(L_masked, (50, 255))
-
-        # For light line on dark background in real life environment:
-        #lightnessMask = self.threshold_binary(L_masked, (180, 255))
-        stackedMask = np.dstack((lightnessMask, lightnessMask, lightnessMask))
-        contourMask = stackedMask.copy()
-        crosshairMask = stackedMask.copy()
-
-        # 5. return value of findContours depends on OpenCV version
-        (contours,hierarchy) = cv2.findContours(lightnessMask.copy(), 1, cv2.CHAIN_APPROX_NONE)
-
-        # overlay mask on lightness image to show masked area on the small picture
-        lightnessMask = cv2.addWeighted(mask,0.2,lightnessMask,0.8,0)
-
-        # 6. Find the biggest contour (if detected) and calculate its centroid
-        if len(contours) > 0:
-            
-            biggest_contour = max(contours, key=cv2.contourArea)
-            M = cv2.moments(biggest_contour)
-
-            # Make sure that "m00" won't cause ZeroDivisionError: float division by zero
-            if M["m00"] != 0:
-                cx = int(M["m10"] / M["m00"])
-                cy = int(M["m01"] / M["m00"])
-            else:
-                cx, cy = 0, 0
-
-            # Show contour and centroid
-            cv2.drawContours(contourMask, biggest_contour, -1, (0,255,0), 10)
-            cv2.circle(contourMask, (cx, cy), 20, (0, 0, 255), -1)
-
-            # Show crosshair and difference from middle point
-            cv2.line(crosshairMask,(cx,0),(cx,rows),(0,0,255),10)
-            cv2.line(crosshairMask,(0,cy),(cols,cy),(0,0,255),10)
-            cv2.line(crosshairMask,(int(cols/2),0),(int(cols/2),rows),(255,0,0),10)
-
-        # Return processed frames
-        return L_masked, contourMask, crosshairMask
-
-    # Convert to RGB channels
-    def convert2rgb(self, img):
-        R = img[:, :, 2]
-        G = img[:, :, 1]
-        B = img[:, :, 0]
-
-        return R, G, B
-    
-    # Convert to HLS color space
-    def convert2hls(self, img):
-        hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
-        H = hls[:, :, 0]
-        L = hls[:, :, 1]
-        S = hls[:, :, 2]
-
-        return H, L, S
-    
-    # apply a trapezoid polygon mask, size is hardcoded for 640 x 480px
-    def apply_polygon_mask(self, img):
-        # np.zeros_like(var)
-        # var 변수의 크기만큼 0으로 찬 zero-matrix를 반환한다.
-        mask = np.zeros_like(img)
-        ignore_mask_color = 255
-        imshape = img.shape
-
-        vertices = np.array([[(0, imshape[0]), (500, 200), (800, 200), (imshape[1], imshape[0])]], dtype=np.int32)
-        # cv2.fillPoly(img, pts, color)
-        # img 내부의 pts 영역만큼 color 색으로 칠해서 반환
-        # pts는 np를 활용한 다각형 배열
-        cv2.fillPoly(mask, vertices, ignore_mask_color)
-        # cv2.bitwise_and(img1, img2, mask)
-        # img1, img2간 서로 겹치는 영역 출력
-        # img1과 mask만 입력하면 img중 mask에 해당되는 부분만 출력
-        masked_image = cv2.bitwise_and(img, mask)
-
-        return masked_image, mask
-    
-    # apply threshold and result a binary image
-    def threshold_binary(self, img, thresh=(200, 255)):
-        binary = np.zeros_like(img)
-        binary[(img >= thresh[0]) & (img <= thresh[1])] = 1
-
-        return binary*255
-    
-    # add small images to the top row of the main image
-    def add_small_pictures(self, img, samll_images, size=(160, 120)):
-        x_base_offset = 40
-        y_base_offset = 10
-
-        x_offset = x_base_offset
-        y_offset = y_base_offset
-
-        for small in samll_images:
-            small = cv2.resize(small, size)
-            if len(small.shape) == 2:
-                small = np.dstack([small, small, small])
-            img[y_offset:y_offset+size[1], x_offset:x_offset+size[0]] = small
-            x_offset += size[0] + x_base_offset
-
-        return img
-
-    def stops(self):
-        """Stop the node and the spin thread"""
-        self.running = False
-        self.spin_thread.join()
-
-def main(args=None):
-
-    print("OpenCV version: %s" % cv2.__version__)
-
-    rclpy.init(args=args)
-    node = ImageSubscriber()
-    
+def parse_norm_points(s: str) -> List[Tuple[float, float]]:
+    """
+    Parse normalized polygon points from parameter string.
+    Example format:
+      "0.1,0.9; 0.9,0.9; 0.7,0.6; 0.3,0.6"
+    or JSON-like:
+      "[[0.1,0.9],[0.9,0.9],[0.7,0.6],[0.3,0.6]]"
+    Returns list of (x_norm, y_norm)
+    """
+    s = s.strip()
+    if not s:
+        return []
     try:
-        node.display_image()  # Run the display loop
+        # Try JSON-like
+        pts = ast.literal_eval(s)
+        if isinstance(pts, (list, tuple)) and len(pts) > 0:
+            out = []
+            for p in pts:
+                if isinstance(p, (list, tuple)) and len(p) == 2:
+                    out.append((float(p[0]), float(p[1])))
+            if out:
+                return out
+    except Exception:
+        pass
+
+    # Fallback: "x,y; x,y; ..."
+    parts = [p.strip() for p in s.split(";") if p.strip()]
+    out = []
+    for p in parts:
+        xy = [q.strip() for q in p.split(",")]
+        if len(xy) == 2:
+            out.append((float(xy[0]), float(xy[1])))
+    return out
+
+
+class LaneDetectorNode(Node):
+    def __init__(self):
+        super().__init__("lane_detector")
+
+        # ---- Parameters ----
+        self.declare_parameter("image_topic", "/camera/camera/color/image_raw")
+        self.declare_parameter("invert_lightness", True)
+        self.declare_parameter("threshold", 200)
+        self.declare_parameter("min_area", 500)
+        self.declare_parameter(
+            "mask_points_norm",
+            "[[0.1,0.95],[0.9,0.95],[0.7,0.6],[0.3,0.6]]"  # lower trapezoid
+        )
+        self.declare_parameter("use_imshow", False)
+
+        # Dynamic parameter update
+        self.add_on_set_parameters_callback(self._on_param_update)
+
+        # Read initial params
+        self.image_topic = self.get_parameter("image_topic").get_parameter_value().string_value
+        self.invert_lightness = self.get_parameter("invert_lightness").get_parameter_value().bool_value
+        self.thresh = int(self.get_parameter("threshold").get_parameter_value().integer_value)
+        self.min_area = float(self.get_parameter("min_area").get_parameter_value().double_value
+                              if self.get_parameter("min_area").type_ == Parameter.Type.DOUBLE
+                              else self.get_parameter("min_area").get_parameter_value().integer_value)
+        self.mask_points_norm = parse_norm_points(
+            self.get_parameter("mask_points_norm").get_parameter_value().string_value
+        )
+        self.use_imshow = self.get_parameter("use_imshow").get_parameter_value().bool_value
+
+        # Bridge & pubs/subs
+        self.bridge = CvBridge()
+        self.image_sub = self.create_subscription(Image, self.image_topic, self.image_cb, 10)
+
+        self.pub_light = self.create_publisher(Image, "/lane_detector/debug/lightness", 10)
+        self.pub_light_inv = self.create_publisher(Image, "/lane_detector/debug/lightness_inverted", 10)
+        self.pub_masked = self.create_publisher(Image, "/lane_detector/debug/masked", 10)
+        self.pub_binary = self.create_publisher(Image, "/lane_detector/debug/binary", 10)
+        self.pub_contours = self.create_publisher(Image, "/lane_detector/debug/contours", 10)
+
+        self.pub_centroid = self.create_publisher(Point, "/lane_detector/centroid", 10)
+        self.pub_line = self.create_publisher(LineDetection, "/lane_detector/line_detection", 10)
+
+
+        self.get_logger().info(
+            f"lane_detector started. Subscribing: {self.image_topic} | "
+            f"invert_lightness={self.invert_lightness} | threshold={self.thresh} | min_area={self.min_area}"
+        )
+
+    # ---------------- Parameter callback ----------------
+    def _on_param_update(self, params: List[Parameter]):
+        for p in params:
+            if p.name == "invert_lightness":
+                self.invert_lightness = p.value
+            elif p.name == "threshold":
+                self.thresh = int(p.value)
+            elif p.name == "min_area":
+                self.min_area = float(p.value)
+            elif p.name == "mask_points_norm":
+                self.mask_points_norm = parse_norm_points(p.value)
+            elif p.name == "use_imshow":
+                self.use_imshow = p.value
+        return rclpy.parameter.SetParametersResult(successful=True)
+
+    # ----------------- Core pipeline --------------------
+    def image_cb(self, msg: Image):
+        # 0) Read image (BGR)
+        frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+        h, w = frame.shape[:2]
+
+        # 1) Convert RGB->HLS and extract Lightness
+        # Note: incoming is BGR; convert BGR->HLS (OpenCV's HLS = (H, L, S))
+        hls = cv2.cvtColor(frame, cv2.COLOR_BGR2HLS)
+        light = hls[:, :, 1]  # Lightness channel
+
+        self.pub_light.publish(self.bridge.cv2_to_imgmsg(light, encoding="mono8"))
+
+        # 2) (Optional) invert lightness to detect dark line on light background
+        if self.invert_lightness:
+            light_proc = cv2.bitwise_not(light)
+            self.pub_light_inv.publish(self.bridge.cv2_to_imgmsg(light_proc, encoding="mono8"))
+        else:
+            light_proc = light
+
+        # 3) Polygon mask to filter environment disturbances
+        mask = np.zeros((h, w), dtype=np.uint8)
+        if self.mask_points_norm:
+            pts = np.array(
+                [[int(xn * w), int(yn * h)] for (xn, yn) in self.mask_points_norm],
+                dtype=np.int32
+            )
+        else:
+            # full frame if not provided
+            pts = np.array([[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]], dtype=np.int32)
+        cv2.fillPoly(mask, [pts], 255)
+
+        masked_light = cv2.bitwise_and(light_proc, light_proc, mask=mask)
+        self.pub_masked.publish(self.bridge.cv2_to_imgmsg(masked_light, encoding="mono8"))
+
+        # 4) High-pass binary threshold on lightness => light objects=255, others=0
+        #    If you're detecting a dark line, set invert_lightness=True so dark becomes bright.
+        _, binary = cv2.threshold(masked_light, self.thresh, 255, cv2.THRESH_BINARY)
+        # Optionally clean small noise
+        binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+        self.pub_binary.publish(self.bridge.cv2_to_imgmsg(binary, encoding="mono8"))
+
+        # 5) Find all white contours
+        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        self.get_logger().info(f"[lane_detector] contours_found={len(contours)}")
+
+        # 6) Pick biggest contour & centroid
+        overlay = frame.copy()
+        selected_centroid = None
+        selected_area = 0.0
+
+        if contours:
+            # Filter by min_area
+            big = [c for c in contours if cv2.contourArea(c) >= self.min_area]
+            if big:
+                c = max(big, key=cv2.contourArea)
+                area = float(cv2.contourArea(c))
+                M = cv2.moments(c)
+                if M["m00"] != 0:
+                    cx = int(M["m10"] / M["m00"])
+                    cy = int(M["m01"] / M["m00"])
+                    selected_centroid = (cx, cy)
+                    selected_area = area
+
+                    # Draw
+                    cv2.drawContours(overlay, [c], -1, (0, 255, 0), 2)
+                    cv2.circle(overlay, (cx, cy), 6, (0, 0, 255), -1)
+                    cv2.putText(overlay, f"centroid=({cx},{cy}) area={int(area)}",
+                                (cx + 10, cy - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (50, 50, 255), 1)
+                    self.get_logger().info(
+                        f"[lane_detector] SELECTED contour_area={int(area)} centroid=({cx},{cy})"
+                    )
+                else:
+                    self.get_logger().warn("[lane_detector] moments.m00 == 0; centroid undefined")
+            else:
+                self.get_logger().info(
+                    f"[lane_detector] no contour >= min_area({self.min_area}); nothing selected"
+                )
+        else:
+            self.get_logger().info("[lane_detector] no contours found")
+
+        # Publish overlay image with contours/centroid
+        self.pub_contours.publish(self.bridge.cv2_to_imgmsg(overlay, encoding="bgr8"))
+
+        # Publish centroid (in pixel coordinates); z carries area
+        pt = Point()
+        if selected_centroid is not None:
+            pt.x = float(selected_centroid[0])
+            pt.y = float(selected_centroid[1])
+            pt.z = float(selected_area)
+        else:
+            pt.x = -1.0
+            pt.y = -1.0
+            pt.z = 0.0
+        self.pub_centroid.publish(pt)
+
+        # Optional on-screen debug
+        if self.use_imshow:
+            cv2.imshow("lightness", light)
+            if self.invert_lightness:
+                cv2.imshow("lightness_inverted", light_proc)
+            cv2.imshow("masked", masked_light)
+            cv2.imshow("binary", binary)
+            cv2.imshow("contours", overlay)
+            cv2.waitKey(1)
+
+        ld = LineDetection()
+        ld.header = msg.header  # 입력 이미지의 타임스탬프/프레임 이용
+        ld.width = int(w)
+
+        if selected_centroid is not None:
+            ld.found = True
+            ld.cx = float(selected_centroid[0])
+        else:
+            ld.found = False
+            ld.cx = -1.0
+
+        self.pub_line.publish(ld)
+
+
+def main():
+    rclpy.init()
+    node = LaneDetectorNode()
+    try:
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
-        node.stop()  # Ensure the spin thread and node stop properly
+        if node.use_imshow:
+            cv2.destroyAllWindows()
         node.destroy_node()
         rclpy.shutdown()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
