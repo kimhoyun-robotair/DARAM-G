@@ -162,3 +162,18 @@ def compute_cmd_vel_from_line(obs, config: LineConfig) -> Tuple[float, float, Di
         info["mode"] = "turn_left" if error_px > 0 else "turn_right"
 
     return float(lin_x), float(ang_z), info
+""""""""""""""""""""""""" Publish Twist Function """""""""""""""""""""""""
+def moving_forward():
+    lin_x : float = 0.1
+    ang_z : float = 0.0
+    return lin_x, ang_z
+
+def turning_standby():
+    lin_x : float = 0.0
+    ang_z : float = 0.05
+    return lin_x, ang_z
+
+def stop_robot():
+    lin_x : float = 0.0
+    ang_z : float = 0.0
+    return lin_x, ang_z
