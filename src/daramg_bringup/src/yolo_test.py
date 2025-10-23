@@ -25,6 +25,8 @@ class FiniteStateMachine(Node):
                                       depth_stop_threshold=0.1, stop_margin=0.05,
                                       lin_max=0.3, ang_max=0.5)
 
+        self.get_logger().info("YOLO Test Node is starting")
+
     def detection_callback(self, msg):
         """Callback function to process detections and update state."""
         self.lin_x, self.ang_z, self.yolo_info = compute_cmd_vel_from_YOLO(detections=msg, 

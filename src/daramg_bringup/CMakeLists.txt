@@ -13,7 +13,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
-install(DIRECTORY config launch weights
+install(DIRECTORY weights
   DESTINATION share/${PROJECT_NAME})
 
 ament_python_install_package(${PROJECT_NAME})

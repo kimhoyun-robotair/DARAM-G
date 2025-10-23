@@ -57,7 +57,7 @@ class LaneDetectorNode(Node):
         # ---- Parameters ----
         self.declare_parameter("image_topic", "/camera/camera/color/image_raw")
         self.declare_parameter("invert_lightness", True)
-        self.declare_parameter("threshold", 200)
+        self.declare_parameter("threshold", 170)
         self.declare_parameter("min_area", 500)
         self.declare_parameter(
             "mask_points_norm",
