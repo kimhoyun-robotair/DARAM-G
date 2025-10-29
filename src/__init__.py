@@ -1,1 +1,0 @@
-"""DARAM-G mission package."""
