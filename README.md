@@ -19,7 +19,7 @@
 - 2025년 9월까지 진행
 
 ### DARAM-G Mk.II -> 2025PhysicalAIChallenge 리포지터리
-- ["https://github.com/kimhoyun-robotair/2025PhysicalAIChallenge.git]
+- [https://github.com/kimhoyun-robotair/2025PhysicalAIChallenge.git]
 - RGB-D 카메라 2개를 활용한 쓰레기 탐색, 회수, 분류 수행을 자체적으로 하는 로버 개발
 - YOLO를 활용한 쓰레기 탐색 및 회수
 - OpenCV를 활용한 색상 기반 영역 인식과 Line Following을 활용한 기초적인 자율 주행 구현
